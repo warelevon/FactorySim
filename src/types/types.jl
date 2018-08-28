@@ -1,4 +1,4 @@
-type Job
+type FactoryTask
 
     index::Integer
     batchIndex::Integer
@@ -8,30 +8,30 @@ type Job
     withoutWorker::Float
     isComplete::Bool
 
-    Job() = new(nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false)
+    FactoryTask() = new(nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false)
 end
 
 type Batch
     index::Integer
     size::Integer
 
-    toDo::Vector{Job}
-    completed::Vector{Job}
+    toDo::Vector{FactoryTask}
+    completed::Vector{FactoryTask}
     dueTime::Float
 
     Batch() = new(nullIndex,nullIndex,[],[],nullTime)
-    Batch(index::Integer,toDo::Vector{Job},dueTime::Float) = new(index,nullIndex,toDo,[],dueTime)
+    Batch(index::Integer,toDo::Vector{FactoryTask},dueTime::Float) = new(index,nullIndex,deepcopy(toDo),[],dueTime)
 
 end
 
 type Schedule
 
     index::Integer
-    numTasks::Integer
+    numfactoryTasks::Integer
 
-    jobList::Vector{Job}
+    factoryTaskList::Vector{FactoryTask}
 
-    Schedule() = new(nullIndex,0,[])
+    Schedule() = new(nullIndex,0,Vector{FactoryTask}())
 end
 
 type ProductOrder

@@ -1,20 +1,20 @@
 using FactorySim
 
-job_dict = Dict{FactorySim.ProductType,Array{FactorySim.Job,1}}()
-jobs=[]
+factoryTask_dict = Dict{FactorySim.ProductType,Array{FactorySim.FactoryTask,1}}()
+factoryTasks=[]
 for i= 1:3
-    push!(jobs,Job())
-    jobs[i].machineType = workStation
+    push!(factoryTasks,FactoryTask())
+    factoryTasks[i].machineType = workStation
 end
-jobs[2].machineType = robot
-job_dict[chair] = jobs
-jobs=[]
+factoryTasks[2].machineType = robot
+factoryTask_dict[chair] = factoryTasks
+factoryTasks=[]
 for i= 1:4
-    push!(jobs,Job())
-    jobs[i].machineType = workStation
+    push!(factoryTasks,FactoryTask())
+    factoryTasks[i].machineType = workStation
 end
-jobs[3].machineType = robot
-job_dict[table]=jobs
+factoryTasks[3].machineType = robot
+factoryTask_dict[table]=factoryTasks
 
 orderlist = Vector{ProductOrder}()
 order=ProductOrder()
@@ -24,12 +24,14 @@ push!(orderlist,order)
 order2=ProductOrder()
 order2.size = 40
 order2.product=chair
+order2.dueTime= -1000
 push!(orderlist,order2)
 
 orderlist
-job_dict
+factoryTask_dict
 
-batchlist = decompose_order(orderlist,Int(50),job_dict)
+batchlist = decomposeOrder(orderlist,Int(50),factoryTask_dict)
 for batch in batchlist
     print(batch.index,',',batch.size,',',length(batch.toDo),'\n')
 end
+value=eddTaskOrder(batchlist)

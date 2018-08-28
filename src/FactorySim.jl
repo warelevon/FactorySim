@@ -31,10 +31,10 @@ export
     runFactConfig, makeFactoryArcs, makeFactoryNodes, readLocationsFile, fact_animate
 
 export
-    decompose_order
+    decomposeOrder, eddTaskOrder
 
 export
-    Job, Batch, Schedule, ProductOrder
+    FactoryTask, Batch, Schedule, ProductOrder
 
 export
     MachineType, nullMachineType, workStation, robot,
