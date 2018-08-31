@@ -3,8 +3,6 @@ using JEMSS
 
 path = @__DIR__
 
-###### Ali is a bawse#####
-
 # generate artificial simulation input files
 println("\n=== Generating factory simulation files ===")
 factConfigFilename = joinpath(path, "fact_config.xml")
