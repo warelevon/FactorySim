@@ -15,4 +15,5 @@ function inOutTest(str)
 end
 
 # Test out if csv file readds how it should. Debugging actually works?!
-@enter inOutTest(str)
+testArr = inOutTest(str);
+Main.Juno.render(typeof(testArr))
