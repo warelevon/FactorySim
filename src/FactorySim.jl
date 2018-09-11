@@ -31,10 +31,10 @@ export
     runFactConfig, makeFactoryArcs, makeFactoryNodes, readLocationsFile, fact_animate
 
 export
-    decomposeOrder, eddTaskOrder
+    decomposeOrder, eddTaskOrder, simulateEvent!, checkFreeWorker!, findClosestWorker
 
 export
-    FactoryTask, Batch, Schedule, ProductOrder
+    FactoryTask, Batch, Schedule, ProductOrder, Worker, Machine, Event, Simulation
 
 export
     MachineType, nullMachineType, workStation, robot,
@@ -49,6 +49,6 @@ include("types/order.jl")
 include("animation/fact_animation.jl")
 
 include("gen_fact_sim_files.jl")
-
+include("simulation.jl")
 
 end

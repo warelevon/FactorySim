@@ -36,6 +36,6 @@ function eddTaskOrder(batchlist::Vector{Batch})
             k+=1
         end
     end
-    schedule.numfactoryTasks = length(schedule.factoryTaskList)
+    schedule.numTasks = length(schedule.factoryTaskList)
     return schedule
 end

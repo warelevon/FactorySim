@@ -1,2 +1,2 @@
-# FactorySim.jl
+# FactorySim
 A factory floor simulator

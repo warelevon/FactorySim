@@ -17,8 +17,11 @@ nullFunction() = nothing
 
 const nullTime = -1.0
 const nullDist = -1.0
+const startLoc = Location(0,0)
 
 
 @enum MachineType nullMachineType=0 workStation=1 robot=2
 
 @enum ProductType nullProductType chair table
+
+@enum EventType nullEvent taskReleased checkAvailableWorker assignClosestAvailableWorker moveToBatch arriveAtBatch moveBatchToMachine startMachineProcess releaseWorker
