@@ -20,7 +20,7 @@ type Batch
 
     toDo::Vector{FactoryTask}
     completed::Vector{FactoryTask}
-    finished::bool
+    finished::Bool
     dueTime::Float
 
     Batch() = new(nullIndex,nullIndex,Location(),nullIndex,[],[],false,nullTime)
