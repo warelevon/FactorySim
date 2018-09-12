@@ -10,7 +10,9 @@ type FactoryTask
     workerIndex::Integer
     workerArrived::Bool
 
-    FactoryTask() = new(nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false)
+    machineIndex::Integer
+
+    FactoryTask() = new(nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false,nullIndex)
 end
 
 type Batch

@@ -12,7 +12,9 @@ function simulateEvent!(sim::Simulation, event::Event)
 	elseif eventType == taskReleased
 		# add released task to the queue and check for available workers
 		push!(sim.queuedTaskList,event.task)
+		push!(sim.currentTasks,event.task)
 		addEvent!(sim.eventList; parentEvent = event, eventType = checkAssign, time = sim.time)
+
 		##################################
 
 	elseif eventType == checkAssign
@@ -81,6 +83,7 @@ function simulateEvent!(sim::Simulation, event::Event)
 		event.task.workerArrived = true
 		closestMachine = findClosestMachine(freeMachines,bLocation)
 		closestMachine.isBusy = true
+		event.task.machineIndex = closestMachine.index
 		changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time,closestMachine.location, closestMachine.nearestNodeIndex)
 		addEvent!(sim.eventList; parentEvent = event, eventType = startMachineProcess, time =  sim.workers[event.workerIndex].route.endTime, workerIndex = worker.index, batchIndex = event.batchIndex,task = event.task)
 
@@ -91,12 +94,28 @@ function simulateEvent!(sim::Simulation, event::Event)
 		addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = sim.time+event.task.withoutWorker, workerIndex = worker.index, batchIndex = event.batchIndex,task = event.task)
 
 	elseif eventType == releaseWorker
-		# move worker and batch to machine for processing if free machine, else free worker and add task back to queue
-		assert(length(freeMachines(event.task.machineType))>0)
+		# reset worker for further use
+		worker = sim.workers[event.workerIndex]
+		worker.isBusy=false
+		worker.currentTask=FactoryTask()
+		if length(sim.queuedTaskList)>0
+			addEvent!(sim.eventList; parentEvent = event, eventType = assignAvailableWorker, time = sim.time)
+		end
+
 		##################################
 	elseif eventType == finishTask
 		# move worker and batch to machine for processing if free machine, else free worker and add task back to queue
-		assert(length(freeMachines(event.task.machineType))>0)
+		batch = sim.batches[event.batchIndex]
+		task=event.task
+		task.isComplete = true
+		filter!(t -> t.index≠task.index,batch.toDO)
+		push!(batch.completed,task)
+		if isEmpty(batch.toDo)
+			batch.finished = true
+		end
+		delete!(sim.currentTasks, task)
+
+
 		##################################
 	else
 		# unspecified event
