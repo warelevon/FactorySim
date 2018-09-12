@@ -41,7 +41,8 @@ export
 
 export
     MachineType, nullMachineType, workStation, robot,
-    ProductType, nullProductType, chair, table
+    ProductType, nullProductType, chair, table,
+    startLoc
 
 
 include("defs.jl")
