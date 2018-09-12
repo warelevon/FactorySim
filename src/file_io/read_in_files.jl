@@ -21,3 +21,18 @@ function readOrderList(productOrderName::String)
     end
     return orders
 end
+
+function readMachines(machineList::String)
+    machineListData = readDlmFile(machineList)
+    machineListData = machineListData[setdiff(1:end,1),:] # remove the first row
+    n = size(machineListData[1:end,1])[1] # number of rows
+
+    machines = Vector{Machine}(n)
+
+    for i = 1:n
+        machines[i] = Machine()
+        machines[i].machineType = MachineType(machineListData[i,1])
+        machines[i].loc = Location(machineListData[i,2],machineListData[i,3]) #set x and y location from row i
+        return machines
+    end
+end
