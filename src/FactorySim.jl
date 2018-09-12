@@ -47,11 +47,13 @@ export
 include("defs.jl")
 
 include("types/types.jl")
+include("file_io/read_in_files.jl")
 include("types/order.jl")
 
 include("animation/fact_animation.jl")
 
 include("gen_fact_sim_files.jl")
 include("simulation.jl")
+
 
 end
