@@ -292,7 +292,22 @@ end
 function simulateToEnd!(sim::Simulation)
 	simulateToTime!(sim, Inf)
 end
-
+## unchanged function from JEMSS, needed here to allow use of type FactorySim.Simulation
+function simulate!(sim::Simulation; timeStep::Float = 1.0)
+	println("running simulation...")
+	startTime = time()
+	nextTime = startTime + timeStep
+	printProgress() = print(@sprintf("\rsim duration: %-9.2f real duration: %.2f seconds", sim.time - sim.startTime, time()-startTime))
+	while !sim.complete
+		simulateNextEvent!(sim)
+		if time() > nextTime
+			printProgress()
+			nextTime += timeStep
+		end
+	end
+	printProgress()
+	println("\n...simulation complete")
+end
 ## slightly changed function from JEMSS, needed here to allow use of type FactorySim.Simulation
 function simulateNextEvent!(sim::Simulation)
 	# get next event, update event index and sim time
