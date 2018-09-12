@@ -7,8 +7,12 @@ type FactoryTask
     withWorker::Float
     withoutWorker::Float
     isComplete::Bool
+    workerIndex::Integer
+    workerArrived::Bool
 
-    FactoryTask() = new(nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false)
+    machineIndex::Integer
+
+    FactoryTask() = new(nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false,nullIndex)
 end
 
 type Batch
@@ -16,15 +20,17 @@ type Batch
     size::Integer
 
 	location::Location
+    nearestNodeIndex::Integer
 	workerInd::Integer
+
 
     toDo::Vector{FactoryTask}
     completed::Vector{FactoryTask}
     finished::Bool
     dueTime::Float
 
-    Batch() = new(nullIndex,nullIndex,Location(),nullIndex,[],[],false,nullTime)
-    Batch(index::Integer,toDo::Vector{FactoryTask},dueTime::Float) = new(index,nullIndex,startLoc,nullIndex,deepcopy(toDo),[],false,dueTime)
+    Batch() = new(nullIndex,nullIndex,Location(),nullIndex,nullIndex,[],[],false,nullTime)
+    Batch(index::Integer,toDo::Vector{FactoryTask},dueTime::Float) = new(index,nullIndex,startLoc,nullIndex,nullIndex,deepcopy(toDo),[],false,dueTime)
 
 end
 
@@ -76,8 +82,10 @@ end
 type Machine
     machineType::MachineType
     loc::Location
+    nearestNodeIndex::Integer
+    isBusy::Bool
 
-    Machine() = new(nullMachineType,Location())
+    Machine() = new(nullMachineType,Location(),nullIndex,false)
 end
 
 type Simulation
