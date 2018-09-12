@@ -83,6 +83,7 @@ type Machine
     machineType::MachineType
     loc::Location
     nearestNodeIndex::Integer
+    nearestNodeDist::Float
     isBusy::Bool
 
     Machine() = new(nullMachineType,Location(),nullIndex,false)
@@ -99,6 +100,7 @@ type Simulation
 	map::Map
 	grid::Grid
 
+    productOrders::Vector{ProductOrder}
 	batches::Vector{Batch}
 	tasks::Vector{FactoryTask}
 	workers::Vector{Worker}
@@ -131,7 +133,7 @@ type Simulation
 
 	Simulation() = new(nullTime, nullTime, nullTime,
 		Network(), Travel(), Map(), Grid(),
-		[], [], [], [], false,
+		[],[], [], [], [], false,
 		[], 0, [],
 		Set(), Set(),
 		"", "", Dict(), Dict(), IOStream(""),

@@ -33,6 +33,6 @@ function readMachines(machineList::String)
         machines[i] = Machine()
         machines[i].machineType = MachineType(machineListData[i,1])
         machines[i].loc = Location(machineListData[i,2],machineListData[i,3]) #set x and y location from row i
-        return machines
     end
+    return machines
 end

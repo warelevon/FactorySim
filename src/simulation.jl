@@ -171,6 +171,266 @@ end
 
 
 
+
+function initSimulation(configFilename::String;
+	allowWriteOutput::Bool = false)
+
+	# read sim config xml file
+	rootElt = xmlFileRoot(configFilename)
+	@assert(name(rootElt) == "simConfig", string("xml root has incorrect name: ", name(rootElt)))
+
+	# for progress messages:
+	t = Vector{Float}(1)
+	initMessage(t, msg) = (t[1] = time(); print(msg))
+	initTime(t) = println(": ", round(time() - t[1], 2), " seconds")
+
+	##################
+	# sim config
+
+	initMessage(t, "reading config file data")
+
+	sim = Simulation()
+	sim.configRootElt = rootElt
+
+	# input
+	sim.inputPath = abspath(eltContentInterpVal(rootElt, "inputPath"))
+	simFilesElt = findElt(rootElt, "simFiles")
+	inputFiles = childrenNodeNames(simFilesElt)
+	sim.inputFiles = Dict{String,File}()
+	for inputFile in inputFiles
+		file = File()
+		file.name = eltContent(simFilesElt, inputFile)
+		file.path = joinpath(sim.inputPath, file.name)
+		if inputFile != "rNetTravels" # do not need checksum of rNetTravels file
+			file.checksum = fileChecksum(file.path)
+		end
+		sim.inputFiles[inputFile] = file
+	end
+
+	# output
+	sim.writeOutput = allowWriteOutput && eltContentVal(rootElt, "writeOutput")
+	sim.outputPath = abspath(eltContentInterpVal(rootElt, "outputPath"))
+	outputFilesElt = findElt(rootElt, "outputFiles")
+	outputFiles = childrenNodeNames(outputFilesElt)
+	sim.outputFiles = Dict{String,File}()
+	for outputFile in outputFiles
+		file = File()
+		file.name = eltContent(outputFilesElt, outputFile)
+		file.path = joinpath(sim.outputPath, file.name)
+		sim.outputFiles[outputFile] = file
+	end
+
+	initTime(t)
+
+	##################
+	# read simulation input files
+
+	initMessage(t, "reading input data")
+
+	simFilePath(name::String) = sim.inputFiles[name].path
+
+	# read sim data
+	sim.workers = readWorkersFile(simFilePath("workers"))
+	sim.startTime=0;
+	sim.time = sim.startTime
+	sim.productOrders = readProductOrdersFile(simFilePath("ProductOrders"))
+	sim.machines = readMachinesFile(simFilePath("machines"))
+	sim.batches = readBatchesFile(simFilePath("batches"))
+
+	# read network data
+	sim.net = Network()
+	net = sim.net # shorthand
+	fGraph = net.fGraph # shorthand
+	fGraph.nodes = readNodesFile(simFilePath("nodes"))
+	(fGraph.arcs, arcTravelTimes) = readArcsFile(simFilePath("arcs"))
+
+	# read rNetTravels from file, if saved
+	rNetTravelsLoaded = NetTravel[]
+	rNetTravelsFilename = ""
+	if haskey(sim.inputFiles, "rNetTravels")
+		rNetTravelsFilename = simFilePath("rNetTravels")
+		if isfile(rNetTravelsFilename)
+			rNetTravelsLoaded = readRNetTravelsFile(rNetTravelsFilename)
+		elseif !isdir(dirname(rNetTravelsFilename)) || splitdir(rNetTravelsFilename)[2] == ""
+			# rNetTravelsFilename is invalid
+			rNetTravelsFilename = ""
+		else
+			# save net.rNetTravels to file once calculated
+		end
+	end
+
+	# read misc
+	sim.map = readMapFile(simFilePath("map"))
+	map = sim.map # shorthand
+	sim.targetResponseTimes = readPrioritiesFile(simFilePath("priorities"))
+	sim.travel = readTravelFile(simFilePath("travel"))
+
+	initTime(t)
+
+	##################
+	# network
+
+	initMessage(t, "initialising fGraph")
+	initGraph!(fGraph)
+	initTime(t)
+
+	initMessage(t, "checking fGraph")
+	checkGraph(fGraph, map)
+	initTime(t)
+
+	initMessage(t, "initialising fNetTravels")
+	initFNetTravels!(net, arcTravelTimes)
+	initTime(t)
+
+	initMessage(t, "creating rGraph from fGraph")
+	createRGraphFromFGraph!(net)
+	initTime(t)
+	println("fNodes: ", length(net.fGraph.nodes), ", rNodes: ", length(net.rGraph.nodes))
+
+	initMessage(t, "checking rGraph")
+	checkGraph(net.rGraph, map)
+	initTime(t)
+
+	if rNetTravelsLoaded != []
+		println("using data from rNetTravels file")
+		try
+			initMessage(t, "creating rNetTravels from fNetTravels")
+			createRNetTravelsFromFNetTravels!(net; rNetTravelsLoaded = rNetTravelsLoaded)
+			initTime(t)
+		catch
+			println()
+			warn("failed to use data from rNetTravels file")
+			rNetTravelsLoaded = []
+			rNetTravelsFilename = ""
+		end
+	end
+	if rNetTravelsLoaded == []
+		initMessage(t, "creating rNetTravels from fNetTravels, and shortest paths")
+		createRNetTravelsFromFNetTravels!(net)
+		initTime(t)
+		if rNetTravelsFilename != ""
+			initMessage(t, "saving rNetTravels to file")
+			writeRNetTravelsFile(rNetTravelsFilename, net.rNetTravels)
+			initTime(t)
+		end
+	end
+
+	##################
+	# travel
+
+	initMessage(t, "initialising travel")
+
+	travel = sim.travel # shorthand
+	assert(travel.setsStartTimes[1] <= sim.startTime)
+	assert(length(net.fNetTravels) == travel.numModes)
+	for travelMode in travel.modes
+		travelMode.fNetTravel = net.fNetTravels[travelMode.index]
+		travelMode.rNetTravel = net.rNetTravels[travelMode.index]
+	end
+
+	initTime(t)
+
+	##################
+	# grid
+
+	initMessage(t, "placing nodes in grid")
+
+	# hard-coded grid size
+	# grid rects will be roughly square, with one node per square on average
+	n = length(fGraph.nodes)
+	xDist = map.xRange * map.xScale
+	yDist = map.yRange * map.yScale
+	nx = Int(ceil(sqrt(n * xDist / yDist)))
+	ny = Int(ceil(sqrt(n * yDist / xDist)))
+
+	sim.grid = Grid(map, nx, ny)
+	grid = sim.grid # shorthand
+	gridPlaceNodes!(map, grid, fGraph.nodes)
+	initTime(t)
+
+	println("nodes: ", length(fGraph.nodes), ", grid size: ", nx, " x ", ny)
+
+	##################
+	# sim - ambulances, calls, hospitals, stations...
+
+	initMessage(t, "adding ambulances, calls, etc")
+
+	# for each call, hospital, and station, find neareset node
+	for c in sim.machines
+		(c.nearestNodeIndex, c.nearestNodeDist) = findNearestNodeInGrid(map, grid, fGraph.nodes, c.location)
+	end
+
+
+	# create event list
+	# try to add events to eventList in reverse time order, to reduce sorting required
+	sim.eventList = Vector{Event}(0)
+
+	# add first call to event list
+	addEvent!(sim.eventList, sim.calls[1])
+
+	# create ambulance wake up events
+	for a in sim.ambulances
+		initAmbulance!(sim, a)
+		# currently, this sets ambulances to wake up at start of sim, since wake up and sleep events are not in ambulances file yet
+	end
+
+	initTime(t)
+
+	initMessage(t, "storing times between fNodes and common locations")
+
+	# for each station, find time to each node in fGraph for each travel mode, and vice versa (node to station)
+	# for each node in fGraph and each travel mode, find nearest hospital
+	# requires deterministic and static travel times
+
+	commonFNodes = sort(unique(vcat([h.nearestNodeIndex for h in sim.hospitals], [s.nearestNodeIndex for s in sim.stations])))
+	setCommonFNodes!(net, commonFNodes)
+
+	# find the nearest hospital to travel to from each node in fGraph
+	numFNodes = length(fGraph.nodes) # shorthand
+	for fNetTravel in net.fNetTravels
+		fNetTravel.fNodeNearestHospitalIndex = Vector{Int}(numFNodes)
+		travelModeIndex = fNetTravel.modeIndex # shorthand
+		travelMode = travel.modes[travelModeIndex] # shorthand
+		for node in fGraph.nodes
+			# find nearest hospital to node
+			minTime = Inf
+			nearestHospitalIndex = nullIndex
+			for hospital in sim.hospitals
+				(travelTime, rNodes) = shortestPathTravelTime(net, travelModeIndex, node.index, hospital.nearestNodeIndex)
+				travelTime += offRoadTravelTime(travelMode, hospital.nearestNodeDist)
+				if travelTime < minTime
+					minTime = travelTime
+					nearestHospitalIndex = hospital.index
+				end
+			end
+			fNetTravel.fNodeNearestHospitalIndex[node.index] = nearestHospitalIndex
+		end
+	end
+
+	initTime(t)
+
+	##################
+	# decision logic
+
+	decisionElt = findElt(rootElt, "decision")
+	sim.addCallToQueue! = eltContentVal(decisionElt, "callQueueing")
+	sim.findAmbToDispatch! = eltContentVal(decisionElt, "dispatch")
+
+	# move up
+	mud = sim.moveUpData # shorthand
+	moveUpElt = findElt(decisionElt, "moveUp")
+	moveUpModuleName = eltContent(moveUpElt, "module")
+
+
+
+
+
+	return sim
+end
+
+
+
+
 ## JEMSS function for no priority allowing use of type FactorySim.Simulation
 function changeRoute!(sim::Simulation, route::Route, startTime::Float, endLoc::Location, endFNode::Int)
 	changeRoute!(sim, route, lowPriority, startTime, endLoc, endFNode)
