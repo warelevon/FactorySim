@@ -16,5 +16,5 @@ Main.Juno.render(testMachineList)
 
 path =  @__DIR__
 workerListName = joinpath(path, "Workers.csv")
-testWorkerList = readMachines(workerListName);
+testWorkerList = readWorkers(workerListName);
 Main.Juno.render(testWorkerList)
