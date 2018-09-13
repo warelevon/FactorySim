@@ -34,7 +34,7 @@ export
     decomposeOrder, eddTaskOrder, simulateEvent!, checkFreeWorker!, findClosestWorker
 
 export # file_io functions
-    readOrderList, readMachines
+    readOrderList, readMachines, readWorkers
 
 export
     FactoryTask, Batch, Schedule, ProductOrder, Worker, Machine, Event, Simulation

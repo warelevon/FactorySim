@@ -36,3 +36,21 @@ function readMachines(machineList::String)
     end
     return machines
 end
+
+function readWorkers(workerList::String)
+    workerListData = readDlmFile(workerList)
+    workerListData = workerListData[setdiff(1:end,1),:] # remove the first row
+    n = size(workerListData[1:end,1])[1] # number of rows
+
+    workers = Vector{Worker}(n)
+
+    for i = 1:n
+        # Do we need to include more initial attributes?
+        # Otherwise they can be defined within other functions
+        workers[i] = Worker()
+        workers[i].index = workerListData[i,1]
+        workers[i].isBusy = workerListData[i,2]
+        workers[i].location = Location(workerListData[i,3],workerListData[i,4]) #set x and y location from row i
+    end
+    return workers
+end

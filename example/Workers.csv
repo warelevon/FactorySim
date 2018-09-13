@@ -1,0 +1,4 @@
+index,isBusy,location.x,location.y,route.location.x,route.location.y
+1,false,0.15,0.225,0.075,0.15
+2,false,0.15,0.225,0.075,0.15
+3,false,0.15,0.225,0.075,0.15
