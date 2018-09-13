@@ -24,4 +24,4 @@ const startLoc = Location(0,0)
 
 @enum ProductType nullProductType=0 chair=1 table=2
 
-@enum EventType nullEvent taskReleased checkAssign assignClosestAvailableWorker moveToBatch arriveAtBatch moveBatchToMachine startMachineProcess releaseWorker finishTask
+@enum EventType nullEvent taskReleased checkAssign assignClosestAvailableWorker moveToJob arriveAtJob moveJobToMachine startMachineProcess releaseWorker finishTask

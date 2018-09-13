@@ -1,33 +1,23 @@
-function decomposeOrder(orderList::Vector{ProductOrder},maxBatchSize::Int,factoryTask_dict::Dict{ProductType,Vector{FactoryTask}})
-    batchList = Vector{Batch}()
+function decomposeOrder(orderList::Vector{ProductOrder},factoryTask_dict::Dict{ProductType,Vector{FactoryTask}})
+    jobList = Vector{Job}()
     i=1
     for order in orderList
         while order.size> 0
-            batch = Batch(i,factoryTask_dict[order.product],order.dueTime)
-            batch.size = order.size>maxBatchSize ? maxBatchSize : order.size
-            for j=1:length(batch.toDo)
-                batch.toDo[j].batchIndex=i
+            job = Job(i,factoryTask_dict[order.product],order.dueTime)
+            for j=1:length(job.toDo)
+                job.toDo[j].jobIndex=i
             end
-            order.size -= batch.size
-            push!(batchList,batch)
+            order.size -= 1
+            push!(jobList,job)
             i += 1
         end
     end
-    return batchList
+    return jobList
 end
 
-function eddTaskOrder(batchlist::Vector{Batch})
-    sortedList = sort(batchlist,by= x -> x.dueTime)
+function eddTaskOrder(joblist::Vector{Job})
+    sortedList = sort(joblist,by= x -> x.dueTime)
     schedule=Schedule()
-    schedule2=Schedule()
-    #return sortedList
-    k=1
-    for j = 1:length(sortedList[2].toDo)
-        push!(schedule2.factoryTaskList,sortedList[2].toDo[j])
-        schedule2.factoryTaskList[k].index=k
-        k+=1
-    end
-    #return schedule2
     k=1
     for i = 1: length(sortedList)
         for j = 1:length(sortedList[i].toDo)

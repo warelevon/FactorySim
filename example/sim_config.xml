@@ -6,25 +6,19 @@
 
 	<simFiles>
 		<!-- <path>inputPath</path> -->
-		<ambulances>ambulances.csv</ambulances>
+		<machines>machines.csv</ambulances>
 		<arcs>arcs.csv</arcs>
-		<calls>calls.csv</calls>
-		<hospitals>hospitals.csv</hospitals>
+		<productOrders>productOrders.csv</calls>
 		<map>map.csv</map>
 		<nodes>nodes.csv</nodes>
 		<priorities>priorities.csv</priorities>
 		<rNetTravels>r_net_travels.jls</rNetTravels>
-		<stations>stations.csv</stations>
-		<travel>travel.csv</travel>
 	</simFiles>
 
 	<writeOutput>true</writeOutput>
 	<outputFiles>
 		<!-- <path>outputPath</path> -->
-		<ambulances>ambulances.csv</ambulances>
-		<calls>calls.csv</calls>
 		<events>events.csv</events>
-		<hospitals>hospitals.csv</hospitals>
 	</outputFiles>
 
 	<!-- resim = true will resimulate events from outputPath/events file, if possible -->

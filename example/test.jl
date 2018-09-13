@@ -30,9 +30,6 @@ push!(orderlist,order2)
 orderlist
 factoryTask_dict
 
-batchlist = decomposeOrder(orderlist,Int(50),factoryTask_dict)
-#for batch in batchlist
-#    print(batch.index,',',batch.size,',',length(batch.toDo),'\n')
-#end
-value=eddTaskOrder(batchlist)
-typeof(batchlist[1].toDo[1])
+joblist = decomposeOrder(orderlist,Int(50),factoryTask_dict)
+value=eddTaskOrder(joblist)
+typeof(joblist[1].toDo[1])

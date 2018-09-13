@@ -33,14 +33,14 @@ function simulateEvent!(sim::Simulation, event::Event)
 			event.task = popfirst!(possibleQueued)
 			# remove task frome queue
 			filter!(t -> t ≠ event.task, sim.queuedTaskList)
-			event.batchIndex = event.task.batchIndex
+			event.jobIndex = event.task.jobIndex
 			freeWorkers = filter(w -> !w.isBusy,sim.workers)
-			worker = findClosestWorker(freeWorkers,sim.batches[event.batchIndex].location)
+			worker = findClosestWorker(freeWorkers,sim.jobs[event.jobIndex].location)
 			assert(event.task.workerIndex==nullIndex)
 			event.task.workerIndex = worker.index
 			worker.currentTask = event.task
 			if sim.workerFree
-				addEvent!(sim.eventList; parentEvent = event, eventType = moveToBatch, time = sim.time, workerIndex = worker.index,batchIndex = event.batchIndex,task = event.task)
+				addEvent!(sim.eventList; parentEvent = event, eventType = moveToJob, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
 			end
 
 			if !isEmpty(possibleQueued)
@@ -49,27 +49,27 @@ function simulateEvent!(sim::Simulation, event::Event)
 		end
 
 		##################################
-	elseif eventType == moveToBatch
-		# move worker to batch of current task
+	elseif eventType == moveToJob
+		# move worker to job of current task
 		worker = findClosestWorker(filter(w -> !w.isBusy,sim.workers),event.task)
 		worker.isBusy=true
-		location = sim.batches[event.batchIndex].location
+		location = sim.jobs[event.jobIndex].location
 
-		(sim.batches[event.batchIndex].nearestNodeIndex, dist) = findNearestNodeInGrid(sim.map, sim.grid, sim.net.fGraph.nodes, location)
+		(sim.jobs[event.jobIndex].nearestNodeIndex, dist) = findNearestNodeInGrid(sim.map, sim.grid, sim.net.fGraph.nodes, location)
 		if dist>0
-			changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time, location, sim.batches[event.batchIndex].nearestNodeIndex)
+			changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time, location, sim.jobs[event.jobIndex].nearestNodeIndex)
 			time = sim.workers[event.workerIndex].route.endTime
 		else
 			time = sim.time
 		end
-		addEvent!(sim.eventList; parentEvent = event, eventType = arriveAtBatch, time = time, workerIndex = worker.index,batchIndex = event.batchIndex,task = event.task)
+		addEvent!(sim.eventList; parentEvent = event, eventType = arriveAtJob, time = time, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
 		##################################
 
-	elseif eventType == arriveAtBatch
-		# process worker arriving at batch. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
+	elseif eventType == arriveAtJob
+		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
 		freeMachines = freeMachines(event.task.machineType)
 		if length(freeMachines)>0
-			addEvent!(sim.eventList; parentEvent = event, eventType = MoveBatchToMachine, time = sim.time, workerIndex = worker.index,batchIndex = event.batchIndex,task = event.task)
+			addEvent!(sim.eventList; parentEvent = event, eventType = MoveJobToMachine, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
 		else
 			addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = sim.time, workerIndex = worker.index)
 			event.task.workerIndex=nullIndex
@@ -77,21 +77,21 @@ function simulateEvent!(sim::Simulation, event::Event)
 			pushfirst!(sim.queuedTaskList,event.task)
 		end
 		##################################
-	elseif eventType == moveBatchToMachine
-		# move worker and batch to machine for processing if free machine, else free worker and add task back to queue
+	elseif eventType == moveJobToMachine
+		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
 		assert(length(freeMachines(event.task.machineType))>0)
 		event.task.workerArrived = true
 		closestMachine = findClosestMachine(freeMachines,bLocation)
 		closestMachine.isBusy = true
 		event.task.machineIndex = closestMachine.index
 		changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time,closestMachine.location, closestMachine.nearestNodeIndex)
-		addEvent!(sim.eventList; parentEvent = event, eventType = startMachineProcess, time =  sim.workers[event.workerIndex].route.endTime, workerIndex = worker.index, batchIndex = event.batchIndex,task = event.task)
+		addEvent!(sim.eventList; parentEvent = event, eventType = startMachineProcess, time =  sim.workers[event.workerIndex].route.endTime, workerIndex = worker.index, jobIndex = event.jobIndex,task = event.task)
 
 		##################################
 	elseif eventType == startMachineProcess
-		# process worker arriving at batch. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
+		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
 		addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = sim.time+event.task.withWorker, workerIndex = worker.index)
-		addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = sim.time+event.task.withoutWorker, workerIndex = worker.index, batchIndex = event.batchIndex,task = event.task)
+		addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = sim.time+event.task.withoutWorker, workerIndex = worker.index, jobIndex = event.jobIndex,task = event.task)
 
 	elseif eventType == releaseWorker
 		# reset worker for further use
@@ -104,14 +104,14 @@ function simulateEvent!(sim::Simulation, event::Event)
 
 		##################################
 	elseif eventType == finishTask
-		# move worker and batch to machine for processing if free machine, else free worker and add task back to queue
-		batch = sim.batches[event.batchIndex]
+		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
+		job = sim.jobs[event.jobIndex]
 		task=event.task
 		task.isComplete = true
-		filter!(t -> t.index≠task.index,batch.toDO)
-		push!(batch.completed,task)
-		if isEmpty(batch.toDo)
-			batch.finished = true
+		filter!(t -> t.index≠task.index,job.toDO)
+		push!(job.completed,task)
+		if isEmpty(job.toDo)
+			job.finished = true
 		end
 		delete!(sim.currentTasks, task)
 
@@ -125,14 +125,14 @@ function simulateEvent!(sim::Simulation, event::Event)
 end
 
 function addEvent!(eventList::Vector{Event};
-	parentEvent::Event = Event(), eventType::EventType = nullEvent, time::Float = nullTime, workerIndex::Integer = nullIndex, batchIndex::Integer = nullIndex, task::FactoryTask = FactoryTask())
+	parentEvent::Event = Event(), eventType::EventType = nullEvent, time::Float = nullTime, workerIndex::Integer = nullIndex, jobIndex::Integer = nullIndex, task::FactoryTask = FactoryTask())
 
 	event = Event()
 	event.parentIndex = parentEvent.index
 	event.eventType = eventType
 	event.time = time
 	event.workerIndex = workerIndex
-	event.batchIndex = batchIndex
+	event.jobIndex = jobIndex
 	event.task = task
 
 	# find where to insert event into list
@@ -233,9 +233,9 @@ function initSimulation(configFilename::String;
 	sim.workers = readWorkersFile(simFilePath("workers"))
 	sim.startTime=0;
 	sim.time = sim.startTime
-	sim.productOrders = readProductOrdersFile(simFilePath("ProductOrders"))
+	sim.productOrders = readProductOrdersFile(simFilePath("productOrders"))
 	sim.machines = readMachinesFile(simFilePath("machines"))
-	sim.batches = readBatchesFile(simFilePath("batches"))
+	sim.jobs = decomposeOrder()
 
 	# read network data
 	sim.net = Network()
@@ -262,7 +262,6 @@ function initSimulation(configFilename::String;
 	# read misc
 	sim.map = readMapFile(simFilePath("map"))
 	map = sim.map # shorthand
-	sim.targetResponseTimes = readPrioritiesFile(simFilePath("priorities"))
 	sim.travel = readTravelFile(simFilePath("travel"))
 
 	initTime(t)

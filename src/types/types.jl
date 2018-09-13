@@ -1,7 +1,7 @@
 type FactoryTask
 
     index::Integer
-    batchIndex::Integer
+    jobIndex::Integer
     machineType::MachineType
 
     withWorker::Float
@@ -15,9 +15,8 @@ type FactoryTask
     FactoryTask() = new(nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false,nullIndex)
 end
 
-type Batch
+type Job
     index::Integer
-    size::Integer
 
 	location::Location
     nearestNodeIndex::Integer
@@ -29,8 +28,8 @@ type Batch
     finished::Bool
     dueTime::Float
 
-    Batch() = new(nullIndex,nullIndex,Location(),nullIndex,nullIndex,[],[],false,nullTime)
-    Batch(index::Integer,toDo::Vector{FactoryTask},dueTime::Float) = new(index,nullIndex,startLoc,nullIndex,nullIndex,deepcopy(toDo),[],false,dueTime)
+    Job() = new(nullIndex,Location(),nullIndex,nullIndex,[],[],false,nullTime)
+    Job(index::Integer,toDo::Vector{FactoryTask},dueTime::Float) = new(index,startLoc,nullIndex,nullIndex,deepcopy(toDo),[],false,dueTime)
 
 end
 
@@ -60,7 +59,7 @@ type Event
 	time::Float
 	task::FactoryTask
 	workerIndex::Int
-	batchIndex::Int
+	jobIndex::Int
 
 
 	Event() = new(nullIndex, nullIndex, nullEvent, nullTime, FactoryTask(), nullIndex, nullIndex)
@@ -101,7 +100,7 @@ type Simulation
 	grid::Grid
 
     productOrders::Vector{ProductOrder}
-	batches::Vector{Batch}
+	jobs::Vector{Job}
 	tasks::Vector{FactoryTask}
 	workers::Vector{Worker}
 	machines::Vector{Machine}
