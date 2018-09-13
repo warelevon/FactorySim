@@ -30,7 +30,7 @@ type Job
     dueTime::Float
 
     Job() = new(nullIndex,Location(),nullIndex,nullIndex,[],[],false,nullTime)
-    Job(index::Integer,toDo::Vector{FactoryTask},dueTime::Float) = new(index,startLoc,nullIndex,nullIndex,deepcopy(toDo),[],false,dueTime)
+    Job(index::Integer,toDo::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullIndex,deepcopy(toDo),[],false,dueTime)
 
 end
 

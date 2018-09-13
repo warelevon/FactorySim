@@ -31,7 +31,7 @@ export
     runFactConfig, makeFactoryArcs, makeFactoryNodes, readLocationsFile, fact_animate
 
 export
-    decomposeOrder, eddTaskOrder, simulateEvent!, checkFreeWorker!, findClosestWorker
+    decomposeOrder, eddTaskOrder, checkFreeWorker!, findClosestWorker, freeMachines, isFreeMachine, findClosestMachine, simulateEvent!
 
 export # file_io functions
     readOrderListFile, readMachinesFile, readWorkersFile
@@ -42,7 +42,7 @@ export
 export
     MachineType, nullMachineType, workStation, robot,
     ProductType, nullProductType, chair, table,
-    startLoc
+    startingLoc
 
 
 include("defs.jl")

@@ -17,7 +17,7 @@ nullFunction() = nothing
 
 const nullTime = -1.0
 const nullDist = -1.0
-const startLoc = Location(0,0)
+const startingLoc = Location(0.1,0.1)
 
 
 @enum MachineType nullMachineType=0 robot=1 workStation=2

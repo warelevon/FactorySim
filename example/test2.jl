@@ -8,7 +8,7 @@ for i = 1:3
 end
 checkFreeWorker!(sim)
 sim.workers[1].isBusy=true
-worker = findClosestWorker(filter(w -> !w.isBusy,sim.workers),startLoc)
+worker = findClosestWorker(filter(w -> !w.isBusy,sim.workers),startingLoc)
 sim
 event.task.index = 4
 for i = 1:3
