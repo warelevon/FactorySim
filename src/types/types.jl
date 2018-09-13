@@ -1,6 +1,7 @@
 type FactoryTask
 
     index::Integer
+    parentTaskIndex::Integer
     jobIndex::Integer
     machineType::MachineType
 
@@ -12,7 +13,7 @@ type FactoryTask
 
     machineIndex::Integer
 
-    FactoryTask() = new(nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false,nullIndex)
+    FactoryTask() = new(nullIndex,nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false,nullIndex)
 end
 
 type Job
@@ -80,7 +81,7 @@ end
 
 type Machine
     machineType::MachineType
-    loc::Location
+    location::Location
     nearestNodeIndex::Integer
     nearestNodeDist::Float
     isBusy::Bool
@@ -100,6 +101,7 @@ type Simulation
 	grid::Grid
 
     productOrders::Vector{ProductOrder}
+    productDict::Dict{ProductType,Vector{FactoryTask}}
 	jobs::Vector{Job}
 	tasks::Vector{FactoryTask}
 	workers::Vector{Worker}
@@ -132,7 +134,7 @@ type Simulation
 
 	Simulation() = new(nullTime, nullTime, nullTime,
 		Network(), Travel(), Map(), Grid(),
-		[],[], [], [], [], false,
+		[],Dict(),[], [], [], [], false,
 		[], 0, [],
 		Set(), Set(),
 		"", "", Dict(), Dict(), IOStream(""),

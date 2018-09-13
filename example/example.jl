@@ -2,6 +2,8 @@ using FactorySim
 using JEMSS
 
 path = @__DIR__
+simConfigFilename = joinpath(path, "sim_config.xml")
+sim = initSimulation(simConfigFilename)
 
 # generate artificial simulation input files
 println("\n=== Generating factory simulation files ===")
@@ -10,8 +12,7 @@ runFactConfig(factConfigFilename; overwriteOutputPath = true)
 
 # create and run simulation using generated files
 println("\n=== Simulating with generated files ===")
-simConfigFilename = joinpath(path, "sim_config.xml")
-sim = initSimulation(simConfigFilename)
+
 simulate!(sim)
 
 # print some basic statistics

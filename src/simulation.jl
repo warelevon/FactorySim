@@ -235,7 +235,9 @@ function initSimulation(configFilename::String;
 	sim.time = sim.startTime
 	sim.productOrders = readProductOrdersFile(simFilePath("productOrders"))
 	sim.machines = readMachinesFile(simFilePath("machines"))
-	sim.jobs = decomposeOrder()
+	print(simFilePath("productDict"))
+	sim.productDict = readProductDictFile(simFilePath("productDict"))
+	sim.jobs = decomposeOrder(sim.productOrders,sim.productDict)
 
 	# read network data
 	sim.net = Network()
@@ -270,31 +272,31 @@ function initSimulation(configFilename::String;
 	# network
 
 	initMessage(t, "initialising fGraph")
-	initGraph!(fGraph)
+	JEMSS.initGraph!(fGraph)
 	initTime(t)
 
 	initMessage(t, "checking fGraph")
-	checkGraph(fGraph, map)
+	JEMSS.checkGraph(fGraph, map)
 	initTime(t)
 
 	initMessage(t, "initialising fNetTravels")
-	initFNetTravels!(net, arcTravelTimes)
+	JEMSS.initFNetTravels!(net, arcTravelTimes)
 	initTime(t)
 
 	initMessage(t, "creating rGraph from fGraph")
-	createRGraphFromFGraph!(net)
+	JEMSS.createRGraphFromFGraph!(net)
 	initTime(t)
 	println("fNodes: ", length(net.fGraph.nodes), ", rNodes: ", length(net.rGraph.nodes))
 
 	initMessage(t, "checking rGraph")
-	checkGraph(net.rGraph, map)
+	JEMSS.checkGraph(net.rGraph, map)
 	initTime(t)
 
 	if rNetTravelsLoaded != []
 		println("using data from rNetTravels file")
 		try
 			initMessage(t, "creating rNetTravels from fNetTravels")
-			createRNetTravelsFromFNetTravels!(net; rNetTravelsLoaded = rNetTravelsLoaded)
+			JEMSS.createRNetTravelsFromFNetTravels!(net; rNetTravelsLoaded = rNetTravelsLoaded)
 			initTime(t)
 		catch
 			println()
@@ -305,11 +307,11 @@ function initSimulation(configFilename::String;
 	end
 	if rNetTravelsLoaded == []
 		initMessage(t, "creating rNetTravels from fNetTravels, and shortest paths")
-		createRNetTravelsFromFNetTravels!(net)
+		JEMSS.createRNetTravelsFromFNetTravels!(net)
 		initTime(t)
 		if rNetTravelsFilename != ""
 			initMessage(t, "saving rNetTravels to file")
-			writeRNetTravelsFile(rNetTravelsFilename, net.rNetTravels)
+			JEMSS.writeRNetTravelsFile(rNetTravelsFilename, net.rNetTravels)
 			initTime(t)
 		end
 	end
@@ -344,7 +346,7 @@ function initSimulation(configFilename::String;
 
 	sim.grid = Grid(map, nx, ny)
 	grid = sim.grid # shorthand
-	gridPlaceNodes!(map, grid, fGraph.nodes)
+	JEMSS.gridPlaceNodes!(map, grid, fGraph.nodes)
 	initTime(t)
 
 	println("nodes: ", length(fGraph.nodes), ", grid size: ", nx, " x ", ny)
