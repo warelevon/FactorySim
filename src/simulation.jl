@@ -21,14 +21,14 @@ function simulateEvent!(sim::Simulation, event::Event)
 		# if a worker is available assign task to worker
 		checkFreeWorker!(sim)
 		if sim.workerFree
-			addEvent!(sim.eventList; parentEvent = event, eventType = assignAvailableWorker, time = sim.time)
+			addEvent!(sim.eventList; parentEvent = event, eventType = assignClosestAvailableWorker, time = sim.time)
 		end
 		##################################
 
 	elseif eventType == assignClosestAvailableWorker
 		# get next task in queued tasks and assign the closest worker to that task
 		assert(length(sim.queuedTaskList)>0)
-		possibleQueued = filter(t -> !isEmpty(t.machineType),sim.queuedTaskList)
+		possibleQueued = filter(t -> !isempty(t.machineType),sim.queuedTaskList)
 		if !isEmpty(possibleQueued)
 			event.task = popfirst!(possibleQueued)
 			# remove task frome queue
@@ -144,6 +144,11 @@ function addEvent!(eventList::Vector{Event};
 	return event
 end
 
+
+function addEvent!(eventList::Vector{Event}, task::FactoryTask, startTime::Float)
+	addEvent!(eventList, eventType=taskReleased,time=startTime,jobIndex = task.jobIndex,task=task)
+end
+
 function checkFreeWorker!(sim::Simulation)
 	sim.workerFree=false
 	for worker in sim.workers
@@ -235,7 +240,6 @@ function initSimulation(configFilename::String;
 	sim.time = sim.startTime
 	sim.productOrders = readProductOrdersFile(simFilePath("productOrders"))
 	sim.machines = readMachinesFile(simFilePath("machines"))
-	print(simFilePath("productDict"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.productOrders,sim.productDict)
 
@@ -366,65 +370,13 @@ function initSimulation(configFilename::String;
 	# try to add events to eventList in reverse time order, to reduce sorting required
 	sim.eventList = Vector{Event}(0)
 
-	# add first call to event list
-	addEvent!(sim.eventList, sim.calls[1])
-
-	# create ambulance wake up events
-	for a in sim.ambulances
-		initAmbulance!(sim, a)
-		# currently, this sets ambulances to wake up at start of sim, since wake up and sleep events are not in ambulances file yet
+	# add first task in each job to event list
+	for j in sim.jobs
+		addEvent!(sim.eventList, j.toDo[1], sim.startTime)
 	end
 
-	initTime(t)
-
-	initMessage(t, "storing times between fNodes and common locations")
-
-	# for each station, find time to each node in fGraph for each travel mode, and vice versa (node to station)
-	# for each node in fGraph and each travel mode, find nearest hospital
-	# requires deterministic and static travel times
-
-	commonFNodes = sort(unique(vcat([h.nearestNodeIndex for h in sim.hospitals], [s.nearestNodeIndex for s in sim.stations])))
-	setCommonFNodes!(net, commonFNodes)
-
-	# find the nearest hospital to travel to from each node in fGraph
-	numFNodes = length(fGraph.nodes) # shorthand
-	for fNetTravel in net.fNetTravels
-		fNetTravel.fNodeNearestHospitalIndex = Vector{Int}(numFNodes)
-		travelModeIndex = fNetTravel.modeIndex # shorthand
-		travelMode = travel.modes[travelModeIndex] # shorthand
-		for node in fGraph.nodes
-			# find nearest hospital to node
-			minTime = Inf
-			nearestHospitalIndex = nullIndex
-			for hospital in sim.hospitals
-				(travelTime, rNodes) = shortestPathTravelTime(net, travelModeIndex, node.index, hospital.nearestNodeIndex)
-				travelTime += offRoadTravelTime(travelMode, hospital.nearestNodeDist)
-				if travelTime < minTime
-					minTime = travelTime
-					nearestHospitalIndex = hospital.index
-				end
-			end
-			fNetTravel.fNodeNearestHospitalIndex[node.index] = nearestHospitalIndex
-		end
-	end
 
 	initTime(t)
-
-	##################
-	# decision logic
-
-	decisionElt = findElt(rootElt, "decision")
-	sim.addCallToQueue! = eltContentVal(decisionElt, "callQueueing")
-	sim.findAmbToDispatch! = eltContentVal(decisionElt, "dispatch")
-
-	# move up
-	mud = sim.moveUpData # shorthand
-	moveUpElt = findElt(decisionElt, "moveUp")
-	moveUpModuleName = eltContent(moveUpElt, "module")
-
-
-
-
 
 	return sim
 end
@@ -569,6 +521,11 @@ function simulate!(sim::Simulation; timeStep::Float = 1.0)
 	printProgress()
 	println("\n...simulation complete")
 end
+## unchanged function from JEMSS, needed here to allow use of type FactorySim.Simulation
+function getNextEvent!(eventList::Vector{Event})
+	return length(eventList) > 0 ? pop!(eventList) : Event()
+end
+
 ## slightly changed function from JEMSS, needed here to allow use of type FactorySim.Simulation
 function simulateNextEvent!(sim::Simulation)
 	# get next event, update event index and sim time
