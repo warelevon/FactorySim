@@ -84,38 +84,49 @@ function simulateEvent!(sim::Simulation, event::Event)
 		possibleQueued = filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList)
 		if !isempty(possibleQueued)
 			event.task = shift!(possibleQueued)
-			# remove task frome queue
-			filter!(t -> t ≠ event.task, sim.queuedTaskList)
 			event.jobIndex = event.task.jobIndex
+			# remove task frome queued tasks
+			filter!(t -> t ≠ event.task, sim.queuedTaskList)
+
+			# find the closest free worker to pair with task
 			freeWorkers = filter(w -> !w.isBusy,sim.workers)
 			worker = findClosestWorker(freeWorkers,sim.jobs[event.jobIndex].location)
+
+			# assigns worker to task
 			assert(event.task.workerIndex==nullIndex)
 			event.task.workerIndex = worker.index
 			worker.currentTask = event.task
-			if sim.workerFree
-				addEvent!(sim.eventList; parentEvent = event, eventType = moveToJob, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
-			end
 
+			# move worker to job location
+			addEvent!(sim.eventList; parentEvent = event, eventType = moveToJob, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
+
+			# if more tasks available check for more free worker
 			if !isempty(possibleQueued)
 				addEvent!(sim.eventList, eventType = checkAssign, time = sim.time)
 			end
 		end
 
 		##################################
-	elseif eventType == moveToJob
-		# move worker to job of current task
-		location = sim.jobs[event.jobIndex].location
-		worker = findClosestWorker(filter(w -> !w.isBusy,sim.workers),location)
-		worker.isBusy=true
 
+	elseif eventType == moveToJob
+		## move worker to job of current task
+		# find location of job
+		location = sim.jobs[event.jobIndex].location
+
+		# set worker as busy
+		worker = sim.workers[event.workerIndex]
+		worker.isBusy=true
+		worker.jobIndex = event.jobIndex
+
+		#find distance and nearest node of job from worker
 		(sim.jobs[event.jobIndex].nearestNodeIndex, dist) = findNearestNodeInGrid(sim.map, sim.grid, sim.net.fGraph.nodes, location)
 		if dist>0
 			changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time, location, sim.jobs[event.jobIndex].nearestNodeIndex)
-			time = sim.workers[event.workerIndex].route.endTime
+			arrivalTime = sim.workers[event.workerIndex].route.endTime
 		else
-			time = sim.time
+			arrivalTime = sim.time
 		end
-		addEvent!(sim.eventList; parentEvent = event, eventType = arriveAtJob, time = time, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
+		addEvent!(sim.eventList; parentEvent = event, eventType = arriveAtJob, time = arrivalTime, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
 		##################################
 
 	elseif eventType == arriveAtJob
@@ -127,22 +138,34 @@ function simulateEvent!(sim::Simulation, event::Event)
 			addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = sim.time, workerIndex = worker.index)
 			event.task.workerIndex=nullIndex
 			event.task.workerArrived = false
-			pushfirst!(sim.queuedTaskList,event.task)
+			unshift!(sim.queuedTaskList,event.task)
 		end
 		##################################
+
 	elseif eventType == moveJobToMachine
 		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
 		assert(length(freeMachines(sim,event.task.machineType))>0)
+
+		# set task to have workerArrived
+		assert(event.task.workerArrived == false)
 		event.task.workerArrived = true
+
+		# find closest machine and attach to task
 		closestMachine = findClosestMachine(freeMachines,bLocation)
 		closestMachine.isBusy = true
 		event.task.machineIndex = closestMachine.index
+
+		#move worker and job to machine
 		changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time,closestMachine.location, closestMachine.nearestNodeIndex)
 		addEvent!(sim.eventList; parentEvent = event, eventType = startMachineProcess, time =  sim.workers[event.workerIndex].route.endTime, workerIndex = worker.index, jobIndex = event.jobIndex,task = event.task)
 
 		##################################
+
 	elseif eventType == startMachineProcess
 		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
+		sim.jobs[event.task.jobIndex].location = sim.machines[event.machineIndex].location
+
+		# release worker when no longer needed. Finish task when process is finished
 		addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = sim.time+event.task.withWorker, workerIndex = worker.index)
 		addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = sim.time+event.task.withoutWorker, workerIndex = worker.index, jobIndex = event.jobIndex,task = event.task)
 
@@ -150,22 +173,30 @@ function simulateEvent!(sim::Simulation, event::Event)
 		# reset worker for further use
 		worker = sim.workers[event.workerIndex]
 		worker.isBusy=false
+		worker.jobIndex = nullIndex
 		worker.currentTask=FactoryTask()
+
+		# attempts to assign a new task to worker is tasks queued
 		if length(sim.queuedTaskList)>0
 			addEvent!(sim.eventList; parentEvent = event, eventType = assignAvailableWorker, time = sim.time)
 		end
 
 		##################################
+
 	elseif eventType == finishTask
 		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
 		job = sim.jobs[event.jobIndex]
 		task=event.task
 		task.isComplete = true
-		filter!(t -> t.index≠task.index,job.toDO)
-		push!(job.completed,task)
-		if isempty(job.toDo)
+
+		# if no more tasks, complete job, else add next task to queue
+		if isempty(filter(t->!t.isComplete),job.tasks)
 			job.finished = true
+		else
+			addEvent!(sim.eventList, job.tasks[task.index+1], event.time)
 		end
+
+		# delete task for animation
 		delete!(sim.currentTasks, task)
 
 
@@ -239,13 +270,16 @@ function initSimulation(configFilename::String;
 	simFilePath(name::String) = sim.inputFiles[name].path
 
 	# read sim data
-	sim.workers = readWorkersFile(simFilePath("workers"))
 	sim.startTime=0;
 	sim.time = sim.startTime
+
+
+	sim.workers = readWorkersFile(simFilePath("workers"))
 	sim.productOrders = readProductOrdersFile(simFilePath("productOrders"))
 	sim.machines = readMachinesFile(simFilePath("machines"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.productOrders,sim.productDict)
+
 
 	# read network data
 	sim.net = Network()
@@ -376,7 +410,7 @@ function initSimulation(configFilename::String;
 
 	# add first task in each job to event list
 	for j in sim.jobs
-		addEvent!(sim.eventList, j.toDo[1], sim.startTime)
+		addEvent!(sim.eventList, j.tasks[1], sim.startTime)
 	end
 
 

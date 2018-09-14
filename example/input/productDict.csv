@@ -1,6 +1,6 @@
 miscData,1,,
-numProducts,nothing,
-2,0
+numProducts,
+2
 ,
 productDict,7,,
 productType,machineType,withWorker,withoutWorker,

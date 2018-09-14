@@ -1,7 +1,7 @@
 type FactoryTask
 
     index::Integer
-    parentTaskIndex::Integer
+    parentIndex::Integer
     jobIndex::Integer
     machineType::MachineType
 
@@ -24,13 +24,12 @@ type Job
 	workerInd::Integer
 
 
-    toDo::Vector{FactoryTask}
-    completed::Vector{FactoryTask}
+    tasks::Vector{FactoryTask}
     finished::Bool
     dueTime::Float
 
-    Job() = new(nullIndex,Location(),nullIndex,nullIndex,[],[],false,nullTime)
-    Job(index::Integer,toDo::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullIndex,deepcopy(toDo),[],false,dueTime)
+    Job() = new(nullIndex,Location(),nullIndex,nullIndex,[],false,nullTime)
+    Job(index::Integer,tasks::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullIndex,deepcopy(tasks),false,dueTime)
 
 end
 
@@ -68,14 +67,16 @@ end
 
 type Worker
     index::Integer
+    jobIndex::Integer
     isBusy::Bool
+
 
 	location::Location
     route::Route
 
     currentTask::FactoryTask
 
-    Worker() = new(nullIndex,false,Location(),Route(),FactoryTask())
+    Worker() = new(nullIndex,nullIndex,false,Location(),Route(),FactoryTask())
 
 end
 

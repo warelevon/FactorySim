@@ -128,12 +128,11 @@ function readProductDictFile(filename::String)
     j=0
     factTaskList = Vector{FactoryTask}()
     for i = 1:n
-        if j!=c["productType"][i]
+        if (j<c["productType"][i])
             if j!=0
-                key = c["productType"][i-1]
-                productDict[ProductType(key)]= deepcopy(factTaskList)
-                factTaskList = Vector{FactoryTask}()
+                productDict[ProductType(j)]= deepcopy(factTaskList)
             end
+            factTaskList = Vector{FactoryTask}()
             j=+1
         end
 

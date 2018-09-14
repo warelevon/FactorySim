@@ -32,4 +32,4 @@ factoryTask_dict
 
 joblist = decomposeOrder(orderlist,Int(50),factoryTask_dict)
 value=eddTaskOrder(joblist)
-typeof(joblist[1].toDo[1])
+typeof(joblist[1].tasks[1])
