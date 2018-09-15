@@ -399,11 +399,12 @@ function initSimulation(configFilename::String;
 	initMessage(t, "adding ambulances, calls, etc")
 
 	# for each call, hospital, and station, find neareset node
-	for c in sim.machines
-		(c.nearestNodeIndex, c.nearestNodeDist) = findNearestNodeInGrid(map, grid, fGraph.nodes, c.location)
+	for m in sim.machines
+		(m.nearestNodeIndex, m.nearestNodeDist) = findNearestNodeInGrid(map, grid, fGraph.nodes, m.location)
 	end
 
-
+	commonFNodes = sort(unique([m.nearestNodeIndex for m in sim.machines]))
+	JEMSS.setCommonFNodes!(net, commonFNodes)
 	# create event list
 	# try to add events to eventList in reverse time order, to reduce sorting required
 	sim.eventList = Vector{Event}(0)
