@@ -28,13 +28,13 @@ function openOutputFiles!(sim::Simulation)
 
 	# write events table name and header
 	writeDlmLine!(sim.eventsFileIO, "events")
-	writeDlmLine!(sim.eventsFileIO, "index", "parentIndex", "time", "eventKey", "ambIndex", "callIndex", "stationIndex")
+	writeDlmLine!(sim.eventsFileIO, "index", "parentIndex", "time", "eventKey", "workerIndex", "jobIndex", "macIndex","eventListSize")
 end
 
 function writeEventToFile!(sim::Simulation, event::Event)
 	if !sim.writeOutput; return; end
 
-	writeDlmLine!(sim.eventsFileIO, event.index, event.parentIndex, @sprintf("%0.5f", event.time), Int(event.eventType), event.workerIndex, event.jobIndex, event.machineIndex)
+	writeDlmLine!(sim.eventsFileIO, event.index, event.parentIndex, @sprintf("%0.5f", event.time), Int(event.eventType), event.workerIndex, event.jobIndex, event.machineIndex, length(sim.eventList))
 
 end
 
