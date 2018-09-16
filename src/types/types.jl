@@ -23,7 +23,7 @@ type Job
 	location::Location
     nearestNodeIndex::Integer
     nearestNodeDist::Float
-	workerInd::Integer
+	workerIndex::Integer
 
 
     tasks::Vector{FactoryTask}

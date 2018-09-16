@@ -16,3 +16,5 @@ sim = initSimulation(simConfigFilename; allowWriteOutput = true)
 openOutputFiles!(sim)
 simulate!(sim)
 closeOutputFiles!(sim)
+sim.numCompletedTasks
+sim.numCompletedJobs
