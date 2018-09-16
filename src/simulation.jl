@@ -240,11 +240,12 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		task=event.task
 		task.isComplete = true
 		print("\nSimTime: ", sim.time,"Tasks length: ", length(job.tasks))
-
+		sim.numCompletedTasks+=1
 		# if no more tasks, complete job, else add next task to queue
 
 		if isempty(filter(t->!t.isComplete,job.tasks))
 			job.finished = true
+			sim.numCompletedJobs+=1
 		else
 			addEvent!(sim.eventList, job.tasks[task.withinJobIndex+1], event.time)
 		end

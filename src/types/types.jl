@@ -115,6 +115,10 @@ type Simulation
 	machines::Vector{Machine}
 	workerFree::Bool
 
+    # Bugfixing
+    numCompletedTasks::Integer
+    numCompletedJobs::Integer
+
 	eventList::Vector{Event} # events to occur now or in future
 	eventIndex::Integer # index of event in events that have occurred
 	queuedTaskList::Vector{FactoryTask} # keep track of queued calls. Calls can be queued after call arrivalTime + dispatchDelay
@@ -142,6 +146,7 @@ type Simulation
 	Simulation() = new(nullTime, nullTime, nullTime,
 		Network(), Travel(), Map(), Grid(),nullIndex,Location(),
 		[],Dict(),[], [], [], [], false,
+        0,0,
 		[], 0, [],
 		Set(), Set(),
 		"", "", Dict(), Dict(), IOStream(""),
