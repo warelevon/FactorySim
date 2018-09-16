@@ -25,13 +25,16 @@ type Job
     nearestNodeDist::Float
 	workerIndex::Integer
 
+    # for animation:
+	currentLoc::Location
+	movedLoc::Bool
 
     tasks::Vector{FactoryTask}
     finished::Bool
     dueTime::Float
 
-    Job() = new(nullIndex,Location(),nullIndex,nullDist,nullIndex,[],false,nullTime)
-    Job(index::Integer,tasks::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullDist,nullIndex,deepcopy(tasks),false,dueTime)
+    Job() = new(nullIndex,Location(),nullIndex,nullDist,nullIndex,Location(),false,[],false,nullTime)
+    Job(index::Integer,tasks::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullDist,nullIndex,Location(),false,deepcopy(tasks),false,dueTime)
 
 end
 
@@ -73,13 +76,16 @@ type Worker
     jobIndex::Integer
     isBusy::Bool
 
+    # for animation:
+    currentLoc::Location
+    movedLoc::Bool
 
 	location::Location
     route::Route
 
     currentTask::FactoryTask
 
-    Worker() = new(nullIndex,nullIndex,false,Location(),Route(),FactoryTask())
+    Worker() = new(nullIndex,nullIndex,false,Location(),false,Location(),Route(),FactoryTask())
 
 end
 
