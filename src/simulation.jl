@@ -131,7 +131,7 @@ function simulateEvent!(sim::Simulation, event::Event)
 		location = sim.jobs[event.jobIndex].location
 
 		# set worker as busy
-		worker = findClosestWorker(sim,currentJob)
+		worker = sim.workers[sim.worker.index] #defined in assignClosestAvailableWorker
 		worker.isBusy=true
 		worker.jobIndex = event.jobIndex
 
