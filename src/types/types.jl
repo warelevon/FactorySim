@@ -82,13 +82,14 @@ type Worker
 end
 
 type Machine
+    index::Integer
     machineType::MachineType
     location::Location
     nearestNodeIndex::Integer
     nearestNodeDist::Float
     isBusy::Bool
 
-    Machine() = new(nullMachineType,Location(),nullIndex,false)
+    Machine() = new(nullIndex,nullMachineType,Location(),nullIndex,false)
 end
 
 type Simulation
@@ -101,6 +102,8 @@ type Simulation
 	travel::Travel
 	map::Map
 	grid::Grid
+    startNodeIndex::Int
+    workerStartingLocation::Location
 
     productOrders::Vector{ProductOrder}
     productDict::Dict{ProductType,Vector{FactoryTask}}
@@ -135,7 +138,7 @@ type Simulation
 	configRootElt::XMLElement
 
 	Simulation() = new(nullTime, nullTime, nullTime,
-		Network(), Travel(), Map(), Grid(),
+		Network(), Travel(), Map(), Grid(),nullIndex,Location(),
 		[],Dict(),[], [], [], [], false,
 		[], 0, [],
 		Set(), Set(),

@@ -106,6 +106,7 @@ function readMachinesFile(filename::String)
 
     for i = 1:n
         machines[i] = Machine()
+        machines[i].index = c["index"][i]
         machines[i].machineType = MachineType(c["machineType"][i])
         machines[i].location = Location(c["locx"][i],c["locy"][i]) #set x and y location from row i
     end

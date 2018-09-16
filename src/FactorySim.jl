@@ -31,7 +31,7 @@ export
     runFactConfig, makeFactoryArcs, makeFactoryNodes, readLocationsFile, fact_animate
 
 export
-    decomposeOrder, eddTaskOrder, checkFreeWorker!, findClosestWorker, freeMachines, isFreeMachine, findClosestMachine, simulateEvent!
+    decomposeOrder, eddTaskOrder, checkFreeWorker!, findClosestWorker, freeMachines, isFreeMachine, findClosestMachine, simulateFactoryEvent!
 
 export # file_io functions
     readOrderListFile, readMachinesFile, readWorkersFile

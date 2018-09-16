@@ -1,6 +1,7 @@
 using FactorySim
 using JEMSS
 sim = FactorySim.Simulation()
+sim.workerStartingLocation=startingLoc
 event=FactorySim.Event()
 for i = 1:3
     push!(sim.workers,Worker())
@@ -8,7 +9,7 @@ for i = 1:3
 end
 checkFreeWorker!(sim)
 sim.workers[1].isBusy=true
-worker = findClosestWorker(filter(w -> !w.isBusy,sim.workers),startingLoc)
+worker = findClosestWorker(filter(w -> !w.isBusy,sim.workers),sim.workerStartingLocation)
 sim
 event.task.index = 4
 for i = 1:3

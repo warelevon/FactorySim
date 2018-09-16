@@ -1,6 +1,6 @@
 machines,3,,
-machineType,locx,locy,
-1,0.075,0.15
-1,0.15,0.15
-2,0.225,0.15
+index,machineType,locx,locy,
+1,1,0.075,0.15
+2,1,0.15,0.15
+3,2,0.225,0.15
 ,
