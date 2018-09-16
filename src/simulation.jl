@@ -73,12 +73,29 @@ function findClosestWorker(sim::Simulation,currentJob::Job)
 end
 
 ## based off nearestHospitalToCall function in JEMSS
-##### This function is still fucked ######
-function nearestMachineToJob(sim::Simulation,machines::Vector{Machine},loc::Location)
-	travelMode = getTravelMode!(sim.travel, medPriority, sim.time) # medPriority means a slower speed of a worker moving a job. (travelModeIndex 2 in travel.csv)
-	machineIndex = travelMode.fNetTravel.fNodeNearestHospitalIndex[call.nearestNodeIndex]
-	return machines[machineIndex]
-	#return machines[1]
+function nearestMachineToJob(sim::Simulation, job::Job, machineType::MachineType)
+	# Find the nearest node to the job location> This is independent of the workers
+	(node1,dist1) = (job.nearestNodeIndex,job.nearestNodeDist) # is nearestNodeIndex set?
+	travelMode = sim.travel.modes[1] # Could change for when the worker is moving a job
+	time1 = offRoadTravelTime(travelMode, dist1) # traveltime between job and nearest node
+
+	# Of all the free workers, find the closest worker
+	machineIndex = nullIndex
+	minTime = Inf
+	# Select only free workers
+	freeMachines = FactorySim.freeMachines(sim,machineType) # select only the free workers
+	for machine in freeMachines
+		# next/nearest node in worker route
+		(node2, dist2) = (machine.nearestNodeIndex,machine.nearestNodeDist)
+		time2 = offRoadTravelTime(travelMode, dist2)
+		(travelTime, rNodes) = shortestPathTravelTime(sim.net,1, node1, node2) # time spent on network
+		travelTime += time1 + time2
+		if minTime>travelTime
+			machineIndex = machine.index
+			minTime = travelTime
+		end
+	end
+	return sim.machines[machineIndex]
 end
 
 function simulateFactoryEvent!(sim::Simulation, event::Event)
@@ -174,16 +191,16 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 	elseif eventType == moveJobToMachine
 		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
-		freeMachines = FactorySim.freeMachines(sim,event.task.machineType)
-		assert(length(freeMachines)>0)
+		machineType = event.task.machineType
+		assert(length(FactorySim.freeMachines(sim,machineType))>0)
 
 		# set task to have workerArrived
 		assert(event.task.workerArrived == false)
 		event.task.workerArrived = true
 
 		# find closest machine and attach to task
-		jLocation = sim.jobs[event.jobIndex].location
-		closestMachine = nearestMachineToJob(freeMachines,jLocation)
+		job = sim.jobs[event.jobIndex]
+		closestMachine = nearestMachineToJob(sim,job,machineType)
 		closestMachine.isBusy = true
 		event.task.machineIndex = closestMachine.index
 		event.machineIndex = closestMachine.index
