@@ -7,6 +7,7 @@ function decomposeOrder(orderList::Vector{ProductOrder},product_dict::Dict{Produ
             for j=1:length(job.tasks)
                 job.tasks[j].jobIndex=i
                 job.tasks[j].parentIndex=(j==1 ? nullIndex : j-1)
+                job.tasks[j].withinJobIndex = j
             end
             order.size -= 1
             push!(jobList,job)

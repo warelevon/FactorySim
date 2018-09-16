@@ -118,37 +118,25 @@ function readProductDictFile(filename::String)
     table = tables["miscData"]
     numProducts = table.columns["numProducts"][1]
 
-    table = tables["productDict"]
-    n = size(table.data,1) # number of orders
-    assert(n >= 1)
-
+    dictTable = tables["productDict"]
+    m = size(dictTable.data,1) # number of orders
+    assert(m >= 1)
     productDict = Dict{ProductType,Vector{FactoryTask}}()
-    c = table.columns # shorthand
-
-
-    j=0
-    factTaskList = Vector{FactoryTask}()
-    for i = 1:n
-        if (j<c["productType"][i])
-            if j!=0
-                productDict[ProductType(j)]= deepcopy(factTaskList)
-            end
-            factTaskList = Vector{FactoryTask}()
-            j=+1
+    for k=1:m
+        product = dictTable.columns["productName"][k]
+        key = ProductType(dictTable.columns["productType"][k])
+        table = tables[product]
+        n = size(table.data,1) # number of orders
+        assert(n >= 1)
+        c = table.columns # shorthand
+        factTaskList = Vector{FactoryTask}(n)
+        for i = 1:n
+            factTaskList[i] = FactoryTask()
+            factTaskList[i].machineType = MachineType(c["machineType"][i])
+            factTaskList[i].withWorker = c["withWorker"][i]
+            factTaskList[i].withoutWorker = c["withoutWorker"][i]
         end
-
-        task = FactoryTask()
-        task.machineType = MachineType(c["machineType"][i])
-        task.withWorker = c["withWorker"][i]
-        task.withoutWorker = c["withoutWorker"][i]
-        push!(factTaskList,task)
-
-        if i==n
-            key = c["productType"][n]
-            productDict[ProductType(key)]= deepcopy(factTaskList)
-        end
-
+        productDict[key]= deepcopy(factTaskList)
     end
     return productDict
-
 end

@@ -2,6 +2,7 @@ type FactoryTask
 
     index::Integer
     parentIndex::Integer
+    withinJobIndex::Integer
     jobIndex::Integer
     machineType::MachineType
 
@@ -13,7 +14,7 @@ type FactoryTask
 
     machineIndex::Integer
 
-    FactoryTask() = new(nullIndex,nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false,nullIndex)
+    FactoryTask() = new(nullIndex,nullIndex,nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false,nullIndex)
 end
 
 type Job
@@ -54,16 +55,17 @@ type ProductOrder
 end
 
 type Event
-	index::Int # index of event in list of events that have occurred (not for sim.eventList)
-	parentIndex::Int # index of parent event
+	index::Integer # index of event in list of events that have occurred (not for sim.eventList)
+	parentIndex::Integer # index of parent event
 	eventType::EventType
 	time::Float
 	task::FactoryTask
-	workerIndex::Int
-	jobIndex::Int
+	workerIndex::Integer
+	jobIndex::Integer
+    machineIndex::Integer
 
 
-	Event() = new(nullIndex, nullIndex, nullEvent, nullTime, FactoryTask(), nullIndex, nullIndex)
+	Event() = new(nullIndex, nullIndex, nullEvent, nullTime, FactoryTask(), nullIndex, nullIndex, nullIndex)
 end
 
 type Worker
@@ -102,7 +104,7 @@ type Simulation
 	travel::Travel
 	map::Map
 	grid::Grid
-    startNodeIndex::Int
+    startNodeIndex::Integer
     workerStartingLocation::Location
 
     productOrders::Vector{ProductOrder}
@@ -114,7 +116,7 @@ type Simulation
 	workerFree::Bool
 
 	eventList::Vector{Event} # events to occur now or in future
-	eventIndex::Int # index of event in events that have occurred
+	eventIndex::Integer # index of event in events that have occurred
 	queuedTaskList::Vector{FactoryTask} # keep track of queued calls. Calls can be queued after call arrivalTime + dispatchDelay
 
 

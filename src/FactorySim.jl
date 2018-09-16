@@ -34,7 +34,7 @@ export
     decomposeOrder, eddTaskOrder, checkFreeWorker!, findClosestWorker, freeMachines, isFreeMachine, findClosestMachine, simulateFactoryEvent!
 
 export # file_io functions
-    readOrderListFile, readMachinesFile, readWorkersFile
+    readOrderListFile, readMachinesFile, readWorkersFile, openOutputFiles!, writeEventToFile!, closeOutputFiles!
 
 export
     FactoryTask, Job, Schedule, ProductOrder, Worker, Machine, Event, Simulation
@@ -49,6 +49,7 @@ include("defs.jl")
 
 include("types/types.jl")
 include("file_io/read_in_files.jl")
+include("file_io/write_files.jl")
 include("types/order.jl")
 
 include("animation/fact_animation.jl")
