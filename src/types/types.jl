@@ -21,6 +21,7 @@ type Job
 
 	location::Location
     nearestNodeIndex::Integer
+    nearestNodeDist::Float
 	workerInd::Integer
 
 
@@ -28,8 +29,8 @@ type Job
     finished::Bool
     dueTime::Float
 
-    Job() = new(nullIndex,Location(),nullIndex,nullIndex,[],false,nullTime)
-    Job(index::Integer,tasks::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullIndex,deepcopy(tasks),false,dueTime)
+    Job() = new(nullIndex,Location(),nullIndex,nullDist,nullIndex,[],false,nullTime)
+    Job(index::Integer,tasks::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullDist,nullIndex,deepcopy(tasks),false,dueTime)
 
 end
 
