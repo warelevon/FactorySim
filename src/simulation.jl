@@ -214,7 +214,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		event.machineIndex = closestMachine.index
 
 		#move worker and job to machine
-		changeRoute!(sim, worker.route, sim.time,closestMachine.location, closestMachine.nearestNodeIndex)
+		changeRoute!(sim, worker.route, sim.time,closestMachine.inputLocation, closestMachine.nearestNodeIndex)
 		addEvent!(sim.eventList; parentEvent = event, eventType = startMachineProcess, time =  worker.route.endTime,
 		workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex = event.machineIndex, task = event.task)
 
@@ -222,7 +222,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 	elseif eventType == startMachineProcess
 		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
-		sim.jobs[event.task.jobIndex].location = sim.machines[event.machineIndex].location
+		sim.jobs[event.task.jobIndex].location = sim.machines[event.machineIndex].inputLocation
 		# update worker and job status
 		sim.workers[event.workerIndex].status = workerProcessingJob
 		sim.jobs[event.jobIndex].status = jobAtMachine
@@ -476,7 +476,7 @@ function initSimulation(configFilename::String;
 
 	# for each call, hospital, and station, find neareset node
 	for m in sim.machines
-		(m.nearestNodeIndex, m.nearestNodeDist) = findNearestNodeInGrid(map, grid, fGraph.nodes, m.location)
+		(m.nearestNodeIndex, m.nearestNodeDist) = findNearestNodeInGrid(map, grid, fGraph.nodes, m.inputLocation)
 	end
 
 	commonFNodes = sort(unique([m.nearestNodeIndex for m in sim.machines]))

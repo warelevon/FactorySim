@@ -98,12 +98,14 @@ end
 type Machine
     index::Integer
     machineType::MachineType
+    inputLocation::Location
     location::Location
+    outputLocation::Location
     nearestNodeIndex::Integer
     nearestNodeDist::Float
     isBusy::Bool
 
-    Machine() = new(nullIndex,nullMachineType,Location(),nullIndex,false)
+    Machine() = new(nullIndex,nullMachineType,Location(),Location(),Location(),nullIndex,false)
 end
 
 type Resimulation
