@@ -19,10 +19,10 @@ end
 
 type Job
     index::Integer
+    taskIndex::Integer
 	workerIndex::Integer
     tasks::Vector{FactoryTask}
 
-	location::Location
     nearestNodeIndex::Integer
     nearestNodeDist::Float
 
@@ -30,6 +30,7 @@ type Job
     dueTime::Float
 
     status::JobStatus
+    machineArrivalTime::Float
     finished::Bool
 
     # for animation:
@@ -37,8 +38,8 @@ type Job
 	movedLoc::Bool
 
 
-    Job() = new(nullIndex,nullIndex,[], Location(),nullIndex,nullDist, nullTime,nullTime, nullJobStatus,false, Location(),false)
-    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float) = new(index,nullIndex,deepcopy(tasks), startingLoc,nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,false, Location(),false)
+    Job() = new(nullIndex,nullIndex,nullIndex,[], nullIndex,nullDist, nullTime,nullTime, nullJobStatus,nullTime,false, Location(),false)
+    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float) = new(index,1,nullIndex,deepcopy(tasks), nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,nullTime,false, startingLoc,false)
 
 end
 
@@ -86,12 +87,11 @@ type Worker
     currentLoc::Location
     movedLoc::Bool
 
-	location::Location
     route::Route
 
     currentTask::FactoryTask
 
-    Worker() = new(nullIndex,nullIndex,nullWorkerStatus,Location(),false,Location(),Route(),FactoryTask())
+    Worker() = new(nullIndex,nullIndex,nullWorkerStatus,Location(),false,Route(),FactoryTask())
 
 end
 
@@ -153,8 +153,8 @@ type Simulation
     resim::Resimulation
 
 	# for animation:
-	currentTasks::Set{FactoryTask} # all calls between arrival and service finish at current time
-	previousTasks::Set{FactoryTask} # calls in currentCalls for previous frame
+	currentJobs::Set{Job} # all calls between arrival and service finish at current time
+	previousJobs::Set{Job} # calls in currentCalls for previous frame
 
 	# files/folders:
 	inputPath::String

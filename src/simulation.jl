@@ -111,9 +111,10 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 	elseif eventType == taskReleased
 		# add released task to the queue and check for available workers
-		sim.jobs[event.task.jobIndex].status = jobQueued
+		job = sim.jobs[event.task.jobIndex]
+		job.status = jobQueued
 		push!(sim.queuedTaskList,event.task)
-		push!(sim.currentTasks,event.task)
+		push!(sim.currentJobs,job)
 		addEvent!(sim.eventList; parentEvent = event, eventType = checkAssign, time = sim.time)
 
 		##################################
@@ -137,7 +138,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 			# find the closest free worker to pair with task
 			job = sim.jobs[event.jobIndex]
-			(job.nearestNodeIndex, dist) = findNearestNodeInGrid(sim.map, sim.grid, sim.net.fGraph.nodes, job.location)
+			(job.nearestNodeIndex, dist) = findNearestNodeInGrid(sim.map, sim.grid, sim.net.fGraph.nodes, job.currentLoc)
 			worker = findClosestWorker(sim,job)
 
 			# assigns worker to task
@@ -161,7 +162,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 	elseif eventType == moveToJob
 		## move worker to job of current task
 		# find location of job
-		location = sim.jobs[event.jobIndex].location
+		location = sim.jobs[event.jobIndex].currentLoc
 
 		# set worker as busy
 		worker = sim.workers[event.workerIndex]
@@ -222,7 +223,9 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 	elseif eventType == startMachineProcess
 		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
-		sim.jobs[event.task.jobIndex].location = sim.machines[event.machineIndex].inputLocation
+		job = sim.jobs[event.task.jobIndex]
+		job.currentLoc = sim.machines[event.machineIndex].inputLocation
+		job.machineArrivalTime = event.time
 		# update worker and job status
 		sim.workers[event.workerIndex].status = workerProcessingJob
 		sim.jobs[event.jobIndex].status = jobAtMachine
@@ -245,25 +248,29 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 	elseif eventType == finishTask
 		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
 		job = sim.jobs[event.jobIndex]
+		machine = sim.machines[event.machineIndex]
 		job.workerIndex=nullIndex
 		job.status = jobProcessed
+		job.machineArrivalTime=nullTime
+		job.currentLoc = machine.outputLocation
 		task=event.task
-		machine = sim.machines[event.machineIndex]
+
 		task.isComplete = true
 		machine.isBusy = false
 
 		sim.numCompletedTasks+=1
 		# if no more tasks, complete job, else add next task to queue
-
-		if isempty(filter(t->!t.isComplete,job.tasks))
+		job.taskIndex +=1
+		if job.taskIndex>length(job.tasks)
 			job.finished = true
 			sim.numCompletedJobs+=1
+			delete!(sim.currentJobs, job)
 		else
-			addEvent!(sim.eventList, job.tasks[task.withinJobIndex+1], event.time)
+			addEvent!(sim.eventList, job.tasks[job.taskIndex], event.time)
 		end
 
 		# remove task for animation
-		delete!(sim.currentTasks, task)
+
 
 		addEvent!(sim.eventList; parentEvent = event, eventType = checkAssign, time = sim.time)
 		##################################

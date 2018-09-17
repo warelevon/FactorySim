@@ -39,7 +39,7 @@ end
 function animAddWorkers!(client::WebSocket, sim::Simulation)
 	messageDict = JEMSS.createMessageDict("add_worker")
 	for worker in sim.workers
-		worker.location = JEMSS.getRouteCurrentLocation!(sim.net, worker.route, sim.startTime)
+		worker.currentLoc = JEMSS.getRouteCurrentLocation!(sim.net, worker.route, sim.startTime)
 		messageDict["worker"] = worker
 		write(client, json(messageDict))
 	end
@@ -55,9 +55,9 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 	machines = sim.machines
 	messageDict = JEMSS.createMessageDict("move_worker")
 	for worker in workers
-		workerCurLocation = JEMSS.getRouteCurrentLocation!(sim.net, worker.route, time)
-		if !JEMSS.isSameLocation(workerCurLocation, worker.location)
-			worker.location = workerCurLocation
+		workerLocation = JEMSS.getRouteCurrentLocation!(sim.net, worker.route, time)
+		if !JEMSS.isSameLocation(workerLocation, worker.currentLoc)
+			worker.currentLoc = workerLocation
 			worker.movedLoc = true
 			# move ambulance
 			messageDict["worker"] = worker
@@ -71,46 +71,53 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 	# determine which calls to remove, update, and add
 	# need to do this after finding new ambulance locations
 	# shorthand variable names:
-	previousTasks = sim.previousTasks
-	currentTasks = sim.currentTasks
-	removeTasks = setdiff(previousTasks, currentTasks)
-	updateTasks = intersect(previousTasks, currentTasks)
-	addTasks = setdiff(currentTasks, previousTasks)
+	previousJobs = sim.previousJobs
+	currentJobs = sim.currentJobs
+	removeJobs = setdiff(previousJobs, currentJobs)
+	updateJobs = intersect(previousJobs, currentJobs)
+	addJobs = setdiff(currentJobs, previousJobs)
 	JEMSS.changeMessageDict!(messageDict, "remove_job")
-	for task in removeTasks
-		job = jobs[task.jobIndex]
+	for job in removeJobs
 		job.currentLoc = Location()
 		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
 	JEMSS.changeMessageDict!(messageDict, "move_job")
-	for task in updateTasks
-		job = jobs[task.jobIndex]
+	for job in updateJobs
 		updateJobLocation!(sim, job)
 		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
 	JEMSS.changeMessageDict!(messageDict, "add_job")
-	for task in addTasks
-		job = jobs[task.jobIndex]
-		job.currentLoc = deepcopy(job.location)
+	for job in addJobs
 		job.movedLoc = false
 		updateJobLocation!(sim, job)
 		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
-	sim.previousTasks = copy(sim.currentTasks) # update previousCalls
+	sim.previousJobs = copy(sim.currentJobs) # update previousCalls
 end
 
 # update call current location
 function updateJobLocation!(sim::Simulation, job::Job)
 	# consider moving job if the status indicates worker moving job
-	if job.status == jobGoingToMachine #|| job.status == jobAtMachine
+	if job.status == jobGoingToMachine
 		worker = sim.workers[job.workerIndex]
 		job.movedLoc = worker.movedLoc
 		if worker.movedLoc
 			job.currentLoc = worker.currentLoc
 		end
+	elseif job.status == jobAtMachine
+		task = job.tasks[job.taskIndex]
+		machine = sim.machines[task.machineIndex]
+		oLoc = machine.outputLocation
+		iLoc = machine.inputLocation
+		jobProg = sim.time - job.machineArrivalTime
+		jobTotal = task.withoutWorker
+		jobPerc = jobProg/jobTotal
+		job.currentLoc.x = iLoc.x + (jobPerc * (oLoc.x-iLoc.x))
+		job.currentLoc.y = iLoc.y + (jobPerc * (oLoc.y-iLoc.y))
+		job.movedLoc = true
 	end
 end
 
@@ -236,3 +243,8 @@ function runAnimServer(port::Int)
 	println("opened port $animPort, use this for subsequent animation windows")
 	return true
 end
+
+# JSON.lower for various types, to reduce length of string returned from json function
+JSON.lower(w::Worker) = Dict("index" => w.index, "currentLoc" => w.currentLoc)
+JSON.lower(j::Job) = Dict("index" => j.index, "currentLoc" => j.currentLoc)
+JSON.lower(m::Machine) = Dict("index" => m.index, "location" => m.location)

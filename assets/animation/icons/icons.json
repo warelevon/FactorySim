@@ -8,8 +8,8 @@
 	},
 	"job": {
 		"options": {
-			"iconSize":[18,18],
-			"iconAnchor":[10,10],
+			"iconSize":[27,27],
+			"iconAnchor":[15,15],
 			"popupAnchor":[0,0]
 		}
 	},

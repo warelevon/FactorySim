@@ -144,19 +144,19 @@
 					break;
 				case "add_worker":
 					var w = msgObj.worker
-					addWorker(w.index, w.location.y, w.location.x)
+					addWorker(w.index, w.currentLoc.y, w.currentLoc.x)
 					break;
 				case "move_worker":
 					var w = msgObj.worker
-					moveWorker(w.index, w.location.y, w.location.x)
+					moveWorker(w.index, w.currentLoc.y, w.currentLoc.x)
 					break;
 				case "add_job":
 					var j = msgObj.job
-					addJob(j.index, j.location.y, j.location.x)
+					addJob(j.index, j.currentLoc.y, j.currentLoc.x)
 					break;
 				case "move_job":
 					var j = msgObj.job
-					moveJob(j.index, j.location.y, j.location.x)
+					moveJob(j.index, j.currentLoc.y, j.currentLoc.x)
 					break;
 				case "remove_job":
 					var j = msgObj.job
