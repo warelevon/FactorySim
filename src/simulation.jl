@@ -540,7 +540,7 @@ function resetSim!(sim::Simulation)
 			end
 		end
 
-		sim.jobs = decomposeOrder(sim.productOrders,sim.productDict)
+		sim.jobs = decomposeOrder(sim.backup.productOrders,sim.backup.productDict)
 		# reset travel state
 		sim.travel.recentSetsStartTimesIndex = 1
 	end
