@@ -28,7 +28,10 @@ using JLD
 import Plots
 
 export
-    runFactConfig, makeFactoryArcs, makeFactoryNodes, readLocationsFile, fact_animate
+    readFactConfig, runFactConfig, makeFactoryArcs, makeFactoryNodes, readLocationsFile, fact_animate, makeOrders
+
+export
+    writeOrdersFile
 
 export
     decomposeOrder, eddTaskOrder, checkFreeWorker!, findClosestWorker, freeMachines, isFreeMachine, findClosestMachine, simulateFactoryEvent!
@@ -56,6 +59,7 @@ include("defs.jl")
 include("types/types.jl")
 include("file_io/read_in_files.jl")
 include("file_io/write_files.jl")
+include("write_sim_files.jl")
 include("types/order.jl")
 
 include("animation/fact_animation.jl")

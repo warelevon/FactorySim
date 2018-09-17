@@ -4,6 +4,9 @@
 	<inputPath>$sourcePath/../../FactorySim/example/input</inputPath>
 	<outputPath>$sourcePath/../../FactorySim/example/output</outputPath>
 
+	<!-- modes: all, calls -->
+	<mode>all</mode>
+
 	<simFiles>
 		<!-- <path>inputPath</path> -->
 		<machines>machines.csv</machines>
@@ -16,6 +19,19 @@
 		<workers>workers.csv</workers>
 		<travel>travel.csv</travel>
 	</simFiles>
+
+	<sim>
+		<numOrders>20</numOrders>
+		<productOrderDistributions>
+			<interarrivalTime seed="0">Exponential(1/10)</interarrivalTime>
+			<productOrderType seed="0">Categorical([0.57, 0.43])</productOrderType>
+			<productOrderSize seed="0">DiscreteUniform(1,10)</productOrderSize>
+			<!-- distribution is dueTime - arrivalTime -->
+			<dueTime seed="0">TriangularDist(1,9,5)</dueTime>
+		</productOrderDistributions>
+		<!-- misc: -->
+		<startTime>0.0</startTime>
+	</sim>
 
 	<writeOutput>true</writeOutput>
 	<outputFiles>

@@ -50,13 +50,14 @@ type Schedule
 end
 
 type ProductOrder
+    index::Integer
     product::ProductType
     size::Integer
     arrivalTime::Float
     dueTime::Float
 
-    ProductOrder() = new(nullProductType,nullIndex,nullTime)
-    ProductOrder(product::ProductType, size::Integer, arrivalTime::Float, dueTime::Float) = new(product,size,arrivalTime,dueTime)
+    ProductOrder() = new(nullIndex,nullProductType,nullIndex,nullTime)
+    ProductOrder(index::Integer, product::ProductType, size::Integer, arrivalTime::Float, dueTime::Float) = new(index,product,size,arrivalTime,dueTime)
 end
 
 type Event

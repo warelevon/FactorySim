@@ -10,11 +10,11 @@ testOrderList = readProductOrdersFile(productOrderName);
 Main.Juno.render(testOrderList)
 
 path =  "C:\\Users\\dd\\.julia\\v0.6\\FactorySim\\example\\input"
-machineListName = joinpath(path, "Machines.csv")
-testMachineList = readMachines(machineListName);
+machineListName = joinpath(path, "machines.csv")
+testMachineList = readMachinesFile(machineListName);
 Main.Juno.render(testMachineList)
 
 path =  "C:\\Users\\dd\\.julia\\v0.6\\FactorySim\\example\\input"
-workerListName = joinpath(path, "Workers.csv")
-testWorkerList = readWorkers(workerListName);
+workerListName = joinpath(path, "workers.csv")
+testWorkerList = readWorkersFile(workerListName);
 Main.Juno.render(testWorkerList)
