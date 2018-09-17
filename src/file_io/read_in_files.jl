@@ -90,7 +90,9 @@ function readProductOrdersFile(filename::String)
         productOrders[i] = ProductOrder()
         productOrders[i].product = ProductType(c["productType"][i])
         productOrders[i].size = c["size"][i]
-        productOrders[i].dueTime = Dates.datetime2unix.(DateTime(c["dueDate"][i],"d-m-y"))
+        productOrders[i].arrivalTime = Dates.datetime2unix.(DateTime(c["arrivalTime"][i],"d-m-yTH:M:S")) #TH:M:S.s
+        productOrders[i].dueTime = Dates.datetime2unix.(DateTime(c["dueTime"][i],"d-m-yTH:M:S")) #TH:M:S.s
+        assert(productOrders[i].dueTime > productOrders[i].arrivalTime) # Make sure that each order is due after it arrives
     end
     return productOrders
 end

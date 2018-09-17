@@ -52,10 +52,11 @@ end
 type ProductOrder
     product::ProductType
     size::Integer
+    arrivalTime::Float
     dueTime::Float
 
     ProductOrder() = new(nullProductType,nullIndex,nullTime)
-    ProductOrder(product::ProductType, size::Integer, dueTime::Float) = new(product,size,dueTime)
+    ProductOrder(product::ProductType, size::Integer, arrivalTime::Float, dueTime::Float) = new(product,size,arrivalTime,dueTime)
 end
 
 type Event
