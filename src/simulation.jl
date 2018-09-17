@@ -146,6 +146,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			worker.currentTask = event.task
 			# move worker to job location
 			job.status = jobWaitingForWorker
+			job.workerIndex = worker.index
 			worker.status = workerMovingToJob
 			addEvent!(sim.eventList; parentEvent = event, eventType = moveToJob, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
 
@@ -290,7 +291,7 @@ end
 
 
 function initSimulation(configFilename::String;
-	allowWriteOutput::Bool = false)
+	createBackup::Bool = true, allowWriteOutput::Bool = false)
 
 	# read sim config xml file
 	rootElt = xmlFileRoot(configFilename)
@@ -473,7 +474,7 @@ function initSimulation(configFilename::String;
 	##################
 	# sim - ambulances, calls, hospitals, stations...
 
-	initMessage(t, "adding ambulances, calls, etc")
+	initMessage(t, "adding workers, calls, etc")
 
 	# for each call, hospital, and station, find neareset node
 	for m in sim.machines
@@ -502,5 +503,45 @@ function initSimulation(configFilename::String;
 
 	initTime(t)
 
+	if createBackup
+		initMessage(t, "creating sim backup")
+		backupSim!(sim) # for restarting sim
+		initTime(t)
+	end
+
 	return sim
+end
+
+
+function backupSim!(sim::Simulation)
+	assert(!sim.used)
+
+	# remove net, travel, grid, and resim from sim before copying sim
+	(net, travel, grid) = (sim.net, sim.travel, sim.grid)
+	(sim.net, sim.travel, sim.grid) = (Network(), Travel(), Grid())
+
+	sim.backup = deepcopy(sim)
+
+	(sim.net, sim.travel, sim.grid) = (net, travel, grid)
+end
+
+# reset sim from sim.backup
+function resetSim!(sim::Simulation)
+	assert(!sim.backup.used)
+
+	if sim.used
+		fnames = Set(fieldnames(sim))
+		fnamesDontCopy = Set([:backup, :net, :travel, :grid]) # will not (yet) copy these fields from sim.backup to sim
+		# note that sim.backup does not contain net, travel, grid, or resim
+		setdiff!(fnames, fnamesDontCopy) # remove fnamesDontCopy from fnames
+		for fname in fnames
+			try
+				setfield!(sim, fname, deepcopy(getfield(sim.backup, fname)))
+			end
+		end
+
+		sim.jobs = decomposeOrder(sim.productOrders,sim.productDict)
+		# reset travel state
+		sim.travel.recentSetsStartTimesIndex = 1
+	end
 end

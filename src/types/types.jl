@@ -139,7 +139,7 @@ type Simulation
 	# files/folders:
 	inputPath::String
 	outputPath::String
-	inputFiles::Dict{String,File} # given input file name (e.g. "ambulances"), returns file information
+	inputFiles::Dict{String,File} # given input file name (e.g. "workers"), returns file information
 	outputFiles::Dict{String,File}
 	eventsFileIO::IOStream # write simulation trace of events to this file
 

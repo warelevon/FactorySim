@@ -10,14 +10,14 @@ productType,productName,
 
 chair,4,,
 productType,machineType,withWorker,withoutWorker,
-1,1,10,200
-1,2,50,50
-1,2,10,10
-1,2,10,10
+1,1,0.010,0.200
+1,2,0.050,0.050
+1,2,0.010,0.010
+1,2,0.010,0.010
 ,
 table,3,,
 productType,machineType,withWorker,withoutWorker,
-2,1,10,400
-2,2,50,50
-2,2,10,10
+2,1,0.010,0.400
+2,2,0.050,0.050
+2,2,0.010,0.010
 ,

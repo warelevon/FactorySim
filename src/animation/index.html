@@ -69,13 +69,9 @@
 	<div id="map_id" class="map"></div>
 	<div id="map_legend" class="legend">
 		<div><h3>Legend</h3></div>
-		<div><img id="image_ambulance"/>ambulance</div>
-		<div><img id="image_hospital"/>hospital</div>
-		<div><img id="image_station"/>station</div>
-		<div>call priorities:</div>
-		<div><img id="image_call_high"/>high</div>
-		<div><img id="image_call_med"/>medium</div>
-		<div><img id="image_call_low"/>low</div>
+		<div><img id="image_worker"/>worker</div>
+		<div><img id="image_machine"/>machine</div>
+		<div><img id="image_job"/>job</div>
 	</div>
 	<div id="menu" class="menu">
 		<div align="center">
@@ -142,33 +138,29 @@
 					var arc = msgObj.arc
 					setArcSpeed(arc.index, msgObj.speed)
 					break;
-				case "add_hospital":
-					var h = msgObj.hospital
-					addHospital(h.index, h.location.y, h.location.x)
+				case "add_machine":
+					var m = msgObj.machine
+					addMachine(m.index, m.location.y, m.location.x)
 					break;
-				case "add_station":
-					var s = msgObj.station
-					addStation(s.index, s.location.y, s.location.x)
+				case "add_worker":
+					var w = msgObj.worker
+					addWorker(w.index, w.location.y, w.location.x)
 					break;
-				case "add_ambulance":
-					var a = msgObj.ambulance
-					addAmb(a.index, a.currentLoc.y, a.currentLoc.x)
+				case "move_worker":
+					var w = msgObj.worker
+					moveWorker(w.index, w.location.y, w.location.x)
 					break;
-				case "move_ambulance":
-					var a = msgObj.ambulance
-					moveAmb(a.index, a.currentLoc.y, a.currentLoc.x)
+				case "add_job":
+					var j = msgObj.job
+					addJob(j.index, j.location.y, j.location.x)
 					break;
-				case "add_call":
-					var c = msgObj.call
-					addCall(c.index, c.currentLoc.y, c.currentLoc.x, c.priority)
+				case "move_job":
+					var j = msgObj.job
+					moveJob(j.index, j.location.y, j.location.x)
 					break;
-				case "move_call":
-					var c = msgObj.call
-					moveCall(c.index, c.currentLoc.y, c.currentLoc.x)
-					break;
-				case "remove_call":
-					var c = msgObj.call
-					removeCall(c.index)
+				case "remove_job":
+					var j = msgObj.job
+					removeJob(j.index)
 					break;
 				case "prepared_next_frame":
 					getNextFrame(msgObj.time)
@@ -244,8 +236,8 @@
 		function stopAnimation() {
 			state = "stopped"
 			console.log(state)
-			removeAmbs();
-			removeCalls();
+			removeWorkers();
+			removeJobs();
 			updateSimTime(simStartTime);
 			connection.send("stop");
 			document.getElementById("run_pause_button").value = "Run";
@@ -435,138 +427,109 @@
 
 		function updateMarkerIcons() {
 			// set icons of existing markers
-			for (i in ambs) {
-				ambs[i].marker.setIcon(icons.ambulance);
+			for (i in workers) {
+				workers[i].marker.setIcon(icons.worker);
 			}
-			for (i in calls) {
-				callIcon = icons[calls[i].iconName];
-				calls[i].marker.setIcon(callIcon);
+			for (i in jobs) {
+				jobs[i].marker.setIcon(icons.job);
 			}
-			for (i in hospitals) {
-				hospitals[i].marker.setIcon(icons.hospital);
-			}
-			for (i in stations) {
-				stations[i].marker.setIcon(icons.station);
+			for (i in machines) {
+				machines[i].marker.setIcon(icons.machine);
 			}
 		}
 
 		////////////////////////////////////////////////////////////////
-		// ambulances
+		// workers
 
-		var ambs = []
+		var workers = []
 
-		function addAmb(id, lat, lon) {
-			ambs[ambs.length] = new ambulance(id, lat, lon);
+		function addWorker(id, lat, lon) {
+			workers[workers.length] = new worker(id, lat, lon);
 		}
 
-		function ambulance(id, lat, lon) {
+		function worker(id, lat, lon) {
 			this.id = id;
-			this.marker = markerIcon(icons.ambulance, lat, lon, "Ambulance " + id);
+			this.marker = markerIcon(icons.worker, lat, lon, "Worker " + id);
 		}
 
-		function moveAmb(id, lat, lon) {
-			if (1 <= id && id <= ambs.length) {
-				if (ambs[id-1].id != id) {
-					console.log("ambulance id does not match index correctly") // debugging
+		function moveWorker(id, lat, lon) {
+			if (1 <= id && id <=workers.length) {
+				if (workers[id-1].id != id) {
+					console.log("worker id does not match index correctly") // debugging
 				}
 				latlng = new L.LatLng(lat, lon)
-				if (ambs[id-1].marker.getLatLng() != latlng) {
-					ambs[id-1].marker.setLatLng(latlng);
+				if (workers[id-1].marker.getLatLng() != latlng) {
+					workers[id-1].marker.setLatLng(latlng);
 				}
 
 			}
 		}
 
-		function removeAmbs() {
-			for (i = 0; i < ambs.length; i++) {
-				map.removeLayer(ambs[i].marker)
+		function removeWorkers() {
+			for (i = 0; i < workers.length; i++) {
+				map.removeLayer(workers[i].marker)
 			}
-			ambs = []
+			workers = []
 		}
 
 		////////////////////////////////////////////////////////////////
-		// calls
+		// jobs
 
-		var calls = {}
+		var jobs = {}
 
-		// add call
-		function addCall(id, lat, lon, priority) {
-			if (id in calls) {
-				console.log("error: call with id", id, "exists already") // debugging
+		// add job
+		function addJob(id, lat, lon) {
+			if (id in jobs) {
+				console.log("error: job with id", id, "exists already") // debugging
 				return
 			}
-			calls[id] = new call(id, lat, lon, priority)
+			jobs[id] = new job(id, lat, lon)
 		}
 
-		function call(id, lat, lon, priority) {
+		function job(id, lat, lon) {
 			this.id = id;
-			this.iconName = "";
-			if (priority == "highPriority") {
-				this.iconName = "call_high"
-			} else if (priority == "medPriority") {
-				this.iconName = "call_med"
-			} else if (priority == "lowPriority") {
-				this.iconName = "call_low"
-			} else {
-				throw new Error("Undefined call priority: " + priority)
-			}
-			callIcon = icons[this.iconName]
-			this.marker = markerIcon(callIcon, lat, lon, "Call " + id);
+			this.marker = markerIcon(icons.job, lat, lon, "Job " + id);
 		}
 
-		function moveCall(id, lat, lon) {
-			if (!(id in calls)) {
-				console.log("call id", id, "not found") // debugging
+		function moveJob(id, lat, lon) {
+			if (!(id in jobs)) {
+				console.log("job id", id, "not found") // debugging
 				return
 			}
 			latlng = new L.LatLng(lat, lon)
-			if (calls[id].marker.getLatLng() != latlng) {
-				calls[id].marker.setLatLng(latlng);
+			if (job[id].marker.getLatLng() != latlng) {
+				jobs[id].marker.setLatLng(latlng);
 			}
 		}
 
-		function removeCall(id) {
-			if (!(id in calls)) {
-				console.log("call id", id, "not found") // debugging
+		function removeJob(id) {
+			if (!(id in jobs)) {
+				console.log("job id", id, "not found") // debugging
 				return
 			}
-			map.removeLayer(calls[id].marker)
-			delete calls[id]
+			map.removeLayer(jobs[id].marker)
+			delete jobs[id]
 		}
 
-		function removeCalls() {
-			for (id in calls) {
-				removeCall(id)
+		function removeJobs() {
+			for (id in jobs) {
+				removeJob(id)
 			}
-			// calls = {}
+			// jobs = {}
 		}
 
 		////////////////////////////////////////////////////////////////
-		// hospitals
+		// machines
 
-		var hospitals = []
+		var machines = []
 
-		function addHospital(id, lat, lon) {
-			hospitals[hospitals.length] = new hospital(id, lat, lon);
+		function addMachine(id, lat, lon) {
+			machines[machines.length] = new machine(id, lat, lon);
 		}
 
-		function hospital(id, lat, lon) {
+		function machine(id, lat, lon) {
 			this.id = id;
-			this.marker = markerIcon(icons.hospital, lat, lon, "Hospital " + id);
-		}
-
-		////////////////////////////////////////////////////////////////
-		// stations
-
-		var stations = []
-
-		function addStation(id, lat, lon) {
-			stations[stations.length] = new station(id, lat, lon);
-		}
-
-		function station(id, lat, lon) {
-			this.id = id;
-			this.marker = markerIcon(icons.station, lat, lon, "Station " + id);
+			this.marker = markerIcon(icons.machine, lat, lon, "Machine " + id);
 		}
 
 		////////////////////////////////////////////////////////////////

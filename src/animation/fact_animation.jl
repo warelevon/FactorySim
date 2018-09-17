@@ -30,10 +30,10 @@ end
 function animAddMachines(client::WebSocket, sim::Simulation)
 	messageDict = JEMSS.createMessageDict("add_machine")
 	for m in sim.machines
-		messageDict["hospital"] = h
+		messageDict["machine"] = m
 		write(client, json(messageDict))
 	end
-	delete!(messageDict, "hospital")(messageDict, "station")
+	delete!(messageDict, "machine")
 end
 
 function animAddWorkers!(client::WebSocket, sim::Simulation)
@@ -50,60 +50,66 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 
 	# check which ambulances have moved since last frame
 	# need to do this before showing call locations
-	messageDict = createMessageDict("move_ambulance")
-	for amb in sim.ambulances
-		ambLocation = getRouteCurrentLocation!(sim.net, amb.route, time)
-		if !isSameLocation(ambLocation, amb.currentLoc)
-			amb.currentLoc = ambLocation
-			amb.movedLoc = true
+	workers = sim.workers
+	jobs = sim.jobs
+	machines = sim.machines
+	messageDict = JEMSS.createMessageDict("move_worker")
+	for worker in workers
+		workerCurLocation = JEMSS.getRouteCurrentLocation!(sim.net, worker.route, time)
+		if !JEMSS.isSameLocation(workerCurLocation, worker.location)
+			worker.location = workerCurLocation
+			worker.movedLoc = true
 			# move ambulance
-			messageDict["ambulance"] = amb
+			messageDict["worker"] = worker
 			write(client, json(messageDict))
 		else
-			amb.movedLoc = false
+			worker.movedLoc = false
 		end
 	end
-	delete!(messageDict, "ambulance")
+	delete!(messageDict, "worker")
 
 	# determine which calls to remove, update, and add
 	# need to do this after finding new ambulance locations
 	# shorthand variable names:
-	previousCalls = sim.previousCalls
-	currentCalls = sim.currentCalls
-	removeCalls = setdiff(previousCalls, currentCalls)
-	updateCalls = intersect(previousCalls, currentCalls)
-	addCalls = setdiff(currentCalls, previousCalls)
-	changeMessageDict!(messageDict, "remove_call")
-	for call in removeCalls
-		call.currentLoc = Location()
-		messageDict["call"] = call
+	previousTasks = sim.previousTasks
+	currentTasks = sim.currentTasks
+	removeTasks = setdiff(previousTasks, currentTasks)
+	updateTasks = intersect(previousTasks, currentTasks)
+	addTasks = setdiff(currentTasks, previousTasks)
+	JEMSS.changeMessageDict!(messageDict, "remove_job")
+	for task in removeTasks
+		job = jobs[task.jobIndex]
+		job.currentLoc = Location()
+		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
-	changeMessageDict!(messageDict, "move_call")
-	for call in updateCalls
-		updateCallLocation!(sim, call)
-		messageDict["call"] = call
+	JEMSS.changeMessageDict!(messageDict, "move_job")
+	for task in updateTasks
+		job = jobs[task.jobIndex]
+		updateJobLocation!(sim, job)
+		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
-	changeMessageDict!(messageDict, "add_call")
-	for call in addCalls
-		call.currentLoc = deepcopy(call.location)
-		call.movedLoc = false
-		updateCallLocation!(sim, call)
-		messageDict["call"] = call
+	JEMSS.changeMessageDict!(messageDict, "add_job")
+	for task in addTasks
+		job = jobs[task.jobIndex]
+		job.currentLoc = deepcopy(job.location)
+		job.movedLoc = false
+		updateJobLocation!(sim, job)
+		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
-	sim.previousCalls = copy(sim.currentCalls) # update previousCalls
+	sim.previousTasks = copy(sim.currentTasks) # update previousCalls
 end
 
 # update call current location
 function updateJobLocation!(sim::Simulation, job::Job)
-	# consider moving call if the status indicates location other than call origin location
-	if call.status == callGoingToHospital || call.status == callAtHospital
-		amb = sim.ambulances[call.ambIndex]
-		call.movedLoc = amb.movedLoc
-		if amb.movedLoc
-			call.currentLoc = amb.currentLoc
+	# consider moving job if the status indicates worker moving job
+	if job.status == jobGoingToMachine #|| job.status == jobAtMachine
+		worker = sim.workers[job.workerIndex]
+		job.movedLoc = worker.movedLoc
+		if worker.movedLoc
+			job.currentLoc = worker.currentLoc
 		end
 	end
 end
@@ -119,31 +125,31 @@ wsh = WebSocketHandler() do req::Request, client::WebSocket
 	println("Running from config: ", configFilename)
 
 	println("Initialising simulation...")
-	sim = initSimulation(configFilename; allowResim = true)
+	sim = initSimulation(configFilename)
 	println("...initialised")
 
 	# set map
-	messageDict = createMessageDict("set_map_view")
+	messageDict = JEMSS.createMessageDict("set_map_view")
 	messageDict["map"] = sim.map
 	write(client, json(messageDict))
 
 	# set sim start time
-	messageDict = createMessageDict("set_start_time")
+	messageDict = JEMSS.createMessageDict("set_start_time")
 	messageDict["time"] = sim.startTime
 	write(client, json(messageDict))
 
-	animSetIcons(client) # set icons before adding items to map
-	animAddNodes(client, sim.net.fGraph.nodes)
-	animAddArcs(client, sim.net) # add first, should be underneath other objects
-	animSetArcSpeeds(client, sim.map, sim.net)
-	animAddBuildings(client, sim)
-	animAddAmbs!(client, sim)
+	animFactSetIcons(client) # set icons before adding items to map
+	JEMSS.animAddNodes(client, sim.net.fGraph.nodes)
+	JEMSS.animAddArcs(client, sim.net) # add first, should be underneath other objects
+	JEMSS.animSetArcSpeeds(client, sim.map, sim.net)
+	animAddMachines(client, sim)
+	animAddWorkers!(client, sim)
 
-	messageDict = createMessageDict("")
+	messageDict = JEMSS.createMessageDict("")
 	while true
 		msg = read(client) # waits for message from client
-		msgString = decodeMessage(msg)
-		(msgType, msgData) = parseMessage(msgString)
+		msgString = JEMSS.decodeMessage(msg)
+		(msgType, msgData) = JEMSS.parseMessage(msgString)
 
 		if msgType == "prepare_next_frame"
 			simTime = Float(msgData[1])
@@ -167,11 +173,11 @@ wsh = WebSocketHandler() do req::Request, client::WebSocket
 		elseif msgType == "stop"
 			# reset
 			resetSim!(sim)
-			animAddAmbs!(client, sim)
+			animAddWorkers!(client, sim)
 
 		elseif msgType == "update_icons"
 			try
-				animSetIcons(client)
+				animFactSetIcons(client)
 			catch e
 				warn("Could not update animation icons")
 				warn(e)

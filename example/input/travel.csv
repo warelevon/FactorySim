@@ -1,6 +1,6 @@
 travelModes,1,,
 travelModeIndex,offRoadSpeed,
-1,1.4
+1,1400
 ,
 travelSets,3,,
 travelSetIndex,priority,travelModeIndex,

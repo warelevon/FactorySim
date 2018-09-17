@@ -1,40 +1,19 @@
 {
-	"ambulance": {
+	"worker": {
 		"options": {
 			"iconSize":[34,34],
 			"iconAnchor":[18,16],
 			"popupAnchor":[0,0]
 		}
 	},
-	"call_low": {
+	"job": {
 		"options": {
 			"iconSize":[18,18],
 			"iconAnchor":[10,10],
 			"popupAnchor":[0,0]
 		}
 	},
-	"call_med": {
-		"options": {
-			"iconSize":[18,18],
-			"iconAnchor":[10,10],
-			"popupAnchor":[0,0]
-		}
-	},
-	"call_high": {
-		"options": {
-			"iconSize":[18,18],
-			"iconAnchor":[10,10],
-			"popupAnchor":[0,0]
-		}
-	},
-	"hospital": {
-		"options": {
-			"iconSize":[46,46],
-			"iconAnchor":[24,26],
-			"popupAnchor":[0,0]
-		}
-	},
-	"station": {
+	"machine": {
 		"options": {
 			"iconSize":[46,46],
 			"iconAnchor":[24,26],

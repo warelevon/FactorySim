@@ -33,6 +33,9 @@ export
 export
     decomposeOrder, eddTaskOrder, checkFreeWorker!, findClosestWorker, freeMachines, isFreeMachine, findClosestMachine, simulateFactoryEvent!
 
+export
+    resetSim!, simulate!, backupSim!
+
 export # file_io functions
     readOrderListFile, readMachinesFile, readWorkersFile, openOutputFiles!, writeEventToFile!, closeOutputFiles!, readProductOrdersFile
 
