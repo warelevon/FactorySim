@@ -24,7 +24,7 @@ type Job
     nearestNodeIndex::Integer
     nearestNodeDist::Float
 	workerIndex::Integer
-    jobStatus::JobStatus
+    status::JobStatus
 
     # for animation:
 	currentLoc::Location
@@ -87,7 +87,7 @@ type Worker
 
     currentTask::FactoryTask
 
-    Worker() = new(nullIndex,nullIndex,nullWStatus,Location(),false,Location(),Route(),FactoryTask())
+    Worker() = new(nullIndex,nullIndex,nullWorkerStatus,Location(),false,Location(),Route(),FactoryTask())
 
 end
 
