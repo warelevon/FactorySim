@@ -43,8 +43,8 @@ export
     MachineType, nullMachineType, workStation, robot,
     ProductType, nullProductType, chair, table,
     EventType, nullEvent, taskReleased, checkAssign, assignClosestAvailableWorker, moveToJob, arriveAtJob, moveJobToMachine, startMachineProcess, releaseWorker, finishTask,
-    WorkerStatus, nullWorkerStatus,
-    JobStatus, nullJobStatus,
+    WorkerStatus, nullWorkerStatus, workerIdle, workerMovingToJob, workerAtJob, workerMovingToMachine, workerProcessingJob,
+    JobStatus, nullJobStatus, jobQueued, jobWaitingForWorker, jobGoingToMachine, jobAtMachine, jobProcessed,
     startingLoc
 
 

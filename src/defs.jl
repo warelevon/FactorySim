@@ -26,6 +26,6 @@ const startingLoc = Location(0.1,0.1)
 
 @enum EventType nullEvent taskReleased checkAssign assignClosestAvailableWorker moveToJob arriveAtJob moveJobToMachine startMachineProcess releaseWorker finishTask
 
-@enum WorkerStatus nullWorkerStatus
+@enum WorkerStatus nullWorkerStatus workerIdle workerMovingToJob workerAtJob workerMovingToMachine workerProcessingJob
 
-@enum JobStatus nullJobStatus
+@enum JobStatus nullJobStatus jobQueued jobWaitingForWorker jobGoingToMachine jobAtMachine jobProcessed

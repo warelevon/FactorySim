@@ -31,7 +31,7 @@ end
 function checkFreeWorker!(sim::Simulation)
 	sim.workerFree=false
 	for worker in sim.workers
-		if !worker.isBusy
+		if worker.status==workerIdle
 			sim.workerFree=true
 			return
 		end
@@ -58,7 +58,7 @@ function findClosestWorker(sim::Simulation,currentJob::Job)
 	workerIndex = nullIndex
 	minTime = Inf
 	# Select only free workers
-	freeWorkers = filter(w -> !w.isBusy,sim.workers) # select only the free workers
+	freeWorkers = filter(w -> w.status==workerIdle,sim.workers) # select only the free workers
 	for worker in freeWorkers
 		# next/nearest node in worker route
 		(node1, time1) = getRouteNextNode!(sim,worker.route,1, sim.time) #set travelModeIndex to 1.
@@ -111,6 +111,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 	elseif eventType == taskReleased
 		# add released task to the queue and check for available workers
+		sim.jobs[event.task.jobIndex].status = jobQueued
 		push!(sim.queuedTaskList,event.task)
 		push!(sim.currentTasks,event.task)
 		addEvent!(sim.eventList; parentEvent = event, eventType = checkAssign, time = sim.time)
@@ -144,6 +145,8 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			event.task.workerIndex = worker.index
 			worker.currentTask = event.task
 			# move worker to job location
+			job.status = jobWaitingForWorker
+			worker.status = workerMovingToJob
 			addEvent!(sim.eventList; parentEvent = event, eventType = moveToJob, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,task = event.task)
 
 			# if more tasks available check for more free workers
@@ -161,7 +164,6 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 		# set worker as busy
 		worker = sim.workers[event.workerIndex]
-		worker.isBusy=true
 		worker.jobIndex = event.jobIndex
 
 		#find distance and nearest node of job from worker
@@ -178,12 +180,14 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 	elseif eventType == arriveAtJob
 		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
 		freeMachines = FactorySim.freeMachines(sim,event.task.machineType)
+		sim.workers[event.workerIndex].status = workerAtJob
 		if length(freeMachines)>0
 			addEvent!(sim.eventList; parentEvent = event, eventType = moveJobToMachine, time = sim.time, workerIndex = event.workerIndex,jobIndex = event.jobIndex,task = event.task)
 		else
 			addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = sim.time, workerIndex = event.workerIndex)
 			event.task.workerIndex=nullIndex
 			event.task.workerArrived = false
+			sim.jobs[event.jobIndex].status = jobQueued
 			unshift!(sim.queuedTaskList,event.task)
 		end
 		##################################
@@ -197,16 +201,20 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		assert(event.task.workerArrived == false)
 		event.task.workerArrived = true
 
+
 		# find closest machine and attach to task
 		job = sim.jobs[event.jobIndex]
+		job.status = jobGoingToMachine
+		worker = sim.workers[event.workerIndex]
+		worker.status = workerMovingToMachine
 		closestMachine = nearestMachineToJob(sim,job,machineType)
 		closestMachine.isBusy = true
 		event.task.machineIndex = closestMachine.index
 		event.machineIndex = closestMachine.index
 
 		#move worker and job to machine
-		changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time,closestMachine.location, closestMachine.nearestNodeIndex)
-		addEvent!(sim.eventList; parentEvent = event, eventType = startMachineProcess, time =  sim.workers[event.workerIndex].route.endTime,
+		changeRoute!(sim, worker.route, sim.time,closestMachine.location, closestMachine.nearestNodeIndex)
+		addEvent!(sim.eventList; parentEvent = event, eventType = startMachineProcess, time =  worker.route.endTime,
 		workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex = event.machineIndex, task = event.task)
 
 		##################################
@@ -214,6 +222,9 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 	elseif eventType == startMachineProcess
 		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
 		sim.jobs[event.task.jobIndex].location = sim.machines[event.machineIndex].location
+		# update worker and job status
+		sim.workers[event.workerIndex].status = workerProcessingJob
+		sim.jobs[event.jobIndex].status = jobAtMachine
 		# release worker when no longer needed. Finish task when process is finished
 		addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+event.task.withWorker), workerIndex = event.workerIndex)
 		addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = (sim.time+event.task.withoutWorker), workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex=event.machineIndex, task = event.task)
@@ -221,7 +232,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 	elseif eventType == releaseWorker
 		# reset worker for further use
 		worker = sim.workers[event.workerIndex]
-		worker.isBusy=false
+		worker.status = workerIdle
 		worker.jobIndex = nullIndex
 		worker.currentTask=FactoryTask()
 
@@ -234,6 +245,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
 		job = sim.jobs[event.jobIndex]
 		job.workerIndex=nullIndex
+		job.status = jobProcessed
 		task=event.task
 		machine = sim.machines[event.machineIndex]
 		task.isComplete = true
@@ -271,6 +283,7 @@ function initWorker!(sim::Simulation, worker::Worker)
 	worker.route.endLoc = sim.workerStartingLocation
 	worker.route.endTime = sim.startTime
 	worker.route.endFNode = sim.startNodeIndex
+	worker.status = workerIdle
 end
 
 

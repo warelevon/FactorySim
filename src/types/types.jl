@@ -76,7 +76,6 @@ end
 type Worker
     index::Integer
     jobIndex::Integer
-    isBusy::Bool
     status::WorkerStatus
 
     # for animation:
@@ -88,7 +87,7 @@ type Worker
 
     currentTask::FactoryTask
 
-    Worker() = new(nullIndex,nullIndex,false,nullWStatus,Location(),false,Location(),Route(),FactoryTask())
+    Worker() = new(nullIndex,nullIndex,nullWStatus,Location(),false,Location(),Route(),FactoryTask())
 
 end
 

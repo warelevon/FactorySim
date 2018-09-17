@@ -49,7 +49,6 @@ function readWorkers(workerList::String)
         # Otherwise they can be defined within other functions
         workers[i] = Worker()
         workers[i].index = workerListData[i,1]
-        workers[i].isBusy = workerListData[i,2]
         workers[i].location = Location(workerListData[i,3],workerListData[i,4]) #set x and y location from row i
     end
     return workers
@@ -69,7 +68,6 @@ function readWorkersFile(filename::String)
         # Otherwise they can be defined within other functions
         workers[i] = Worker()
         workers[i].index = c["index"][i]
-        workers[i].isBusy = c["isBusy"][i]
         workers[i].location = Location(c["locx"][i],c["locy"][i]) #set x and y location from row i
         assert(workers[i].index == i)
     end
