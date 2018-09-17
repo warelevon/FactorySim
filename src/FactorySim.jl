@@ -42,6 +42,9 @@ export
 export
     MachineType, nullMachineType, workStation, robot,
     ProductType, nullProductType, chair, table,
+    EventType, nullEvent, taskReleased, checkAssign, assignClosestAvailableWorker, moveToJob, arriveAtJob, moveJobToMachine, startMachineProcess, releaseWorker, finishTask,
+    WorkerStatus, nullWorkerStatus,
+    JobStatus, nullJobStatus,
     startingLoc
 
 

@@ -24,6 +24,7 @@ type Job
     nearestNodeIndex::Integer
     nearestNodeDist::Float
 	workerIndex::Integer
+    jobStatus::JobStatus
 
     # for animation:
 	currentLoc::Location
@@ -33,8 +34,8 @@ type Job
     finished::Bool
     dueTime::Float
 
-    Job() = new(nullIndex,Location(),nullIndex,nullDist,nullIndex,Location(),false,[],false,nullTime)
-    Job(index::Integer,tasks::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullDist,nullIndex,Location(),false,deepcopy(tasks),false,dueTime)
+    Job() = new(nullIndex,Location(),nullIndex,nullDist,nullIndex,nullJobStatus,Location(),false,[],false,nullTime)
+    Job(index::Integer,tasks::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullDist,nullIndex,nullJobStatus,Location(),false,deepcopy(tasks),false,dueTime)
 
 end
 
@@ -75,6 +76,7 @@ type Worker
     index::Integer
     jobIndex::Integer
     isBusy::Bool
+    status::WorkerStatus
 
     # for animation:
     currentLoc::Location
@@ -85,7 +87,7 @@ type Worker
 
     currentTask::FactoryTask
 
-    Worker() = new(nullIndex,nullIndex,false,Location(),false,Location(),Route(),FactoryTask())
+    Worker() = new(nullIndex,nullIndex,false,nullWStatus,Location(),false,Location(),Route(),FactoryTask())
 
 end
 

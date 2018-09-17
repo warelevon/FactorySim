@@ -25,3 +25,7 @@ const startingLoc = Location(0.1,0.1)
 @enum ProductType nullProductType=0 chair=1 table=2
 
 @enum EventType nullEvent taskReleased checkAssign assignClosestAvailableWorker moveToJob arriveAtJob moveJobToMachine startMachineProcess releaseWorker finishTask
+
+@enum WorkerStatus nullWorkerStatus
+
+@enum JobStatus nullJobStatus
