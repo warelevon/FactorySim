@@ -5,9 +5,9 @@ path = @__DIR__
 
 
 # generate artificial simulation productOrder files
-println("\n=== Generating factory simulation files ===")
-factConfigFilename = joinpath(path, "sim_config.xml")
-runFactConfig(factConfigFilename; overwriteOutputPath = true)
+# println("\n=== Generating factory simulation files ===")
+# factConfigFilename = joinpath(path, "sim_config.xml")
+# runFactConfig(factConfigFilename; overwriteOutputPath = true)
 
 # create and run simulation using generated files
 println("\n=== Simulating with generated files ===")

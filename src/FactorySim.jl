@@ -43,7 +43,7 @@ export # file_io functions
     readOrderListFile, readMachinesFile, readWorkersFile, openOutputFiles!, writeEventToFile!, closeOutputFiles!, readProductOrdersFile
 
 export
-    FactoryTask, Job, Schedule, ProductOrder, Worker, Machine, Event, Simulation
+    FactoryTask, Job, Schedule, ProductOrder, Worker, Machine, Event, Resimulation, Simulation
 
 export
     MachineType, nullMachineType, workStation, robot,

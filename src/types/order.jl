@@ -3,7 +3,7 @@ function decomposeOrder(orderList::Vector{ProductOrder},product_dict::Dict{Produ
     i=1
     for order in orderList
         while order.size> 0
-            job = Job(i,product_dict[order.product],order.dueTime)
+            job = Job(i,product_dict[order.product],order.releaseTime,order.dueTime)
             for j=1:length(job.tasks)
                 job.tasks[j].jobIndex=i
                 job.tasks[j].parentIndex=(j==1 ? nullIndex : j-1)

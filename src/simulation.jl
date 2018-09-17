@@ -347,17 +347,15 @@ function initSimulation(configFilename::String;
 
 	simFilePath(name::String) = sim.inputFiles[name].path
 
-	# read sim data
-	sim.startTime=0;
-	sim.time = sim.startTime
-
 
 	sim.workers = readWorkersFile(simFilePath("workers"))
-	sim.productOrders = readProductOrdersFile(simFilePath("productOrders"))
+	(sim.productOrders, sim.startTime) = readProductOrdersFile(simFilePath("productOrders"))
+	sim.time = sim.startTime
 	sim.machines = readMachinesFile(simFilePath("machines"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.productOrders,sim.productDict)
 
+	assert(all(j->j.releaseTime>=sim.startTime, sim.jobs))
 
 	# read network data
 	sim.net = Network()
@@ -489,7 +487,7 @@ function initSimulation(configFilename::String;
 
 	# add first task in each job to event list
 	for j in sim.jobs
-		addEvent!(sim.eventList, j.tasks[1], sim.startTime)
+		addEvent!(sim.eventList, j.tasks[1], j.releaseTime)
 	end
 
 	sim.workerStartingLocation = startingLoc
@@ -517,12 +515,12 @@ function backupSim!(sim::Simulation)
 	assert(!sim.used)
 
 	# remove net, travel, grid, and resim from sim before copying sim
-	(net, travel, grid) = (sim.net, sim.travel, sim.grid)
-	(sim.net, sim.travel, sim.grid) = (Network(), Travel(), Grid())
+	(net, travel, grid, resim) = (sim.net, sim.travel, sim.grid, sim.resim)
+	(sim.net, sim.travel, sim.grid, sim.resim) = (Network(), Travel(), Grid(), Resimulation())
 
 	sim.backup = deepcopy(sim)
 
-	(sim.net, sim.travel, sim.grid) = (net, travel, grid)
+	(sim.net, sim.travel, sim.grid, sim.resim) = (net, travel, grid, resim)
 end
 
 # reset sim from sim.backup
@@ -530,8 +528,10 @@ function resetSim!(sim::Simulation)
 	assert(!sim.backup.used)
 
 	if sim.used
+		resetJobs!(sim)
+
 		fnames = Set(fieldnames(sim))
-		fnamesDontCopy = Set([:backup, :net, :travel, :grid]) # will not (yet) copy these fields from sim.backup to sim
+		fnamesDontCopy = Set([:backup, :net, :travel, :grid, :jobs]) # will not (yet) copy these fields from sim.backup to sim
 		# note that sim.backup does not contain net, travel, grid, or resim
 		setdiff!(fnames, fnamesDontCopy) # remove fnamesDontCopy from fnames
 		for fname in fnames
@@ -539,9 +539,69 @@ function resetSim!(sim::Simulation)
 				setfield!(sim, fname, deepcopy(getfield(sim.backup, fname)))
 			end
 		end
+		for w in sim.workers
+			w.status = workerIdle
+		end
+		for m in sim.machines
+			m.isBusy = false
+		end
 
-		sim.jobs = decomposeOrder(sim.backup.productOrders,sim.backup.productDict)
+		# reset resimulation state
+		sim.resim.prevEventIndex = 0
+
 		# reset travel state
 		sim.travel.recentSetsStartTimesIndex = 1
+	end
+end
+
+function resetJobs!(sim::Simulation)
+	assert(!sim.backup.used)
+
+	# shorthand:
+	jobs = sim.jobs
+	backupJobs = sim.backup.jobs
+	numJobs = length(jobs)
+	nullJob = Job()
+	nullTask = FactoryTask()
+	jnames = Set(fieldnames(nullJob))
+	tnames = Set(fieldnames(nullTask))
+
+	assert(length(jobs) == length(backupJobs))
+
+	# from jnames and tnames, remove fixed parameters
+	jnamesFixed = Set([:index, :releaseTime, :dueTime, :nearestNodeIndex, :nearestNodeDist, :tasks])
+	setdiff!(jnames, jnamesFixed)
+	tnamesFixed = Set([:index, :parentIndex, :withinJobIndex, :jobIndex, :machineType,
+	:withWorker, :withoutWorker])
+	setdiff!(tnames, tnamesFixed)
+
+	recentJobIndex = findlast(job -> job.releaseTime <= sim.time, jobs)
+	assert(all(i -> jobs[i].status == nullJobStatus, recentJobIndex+1:numJobs))
+
+	# reset calls that arrived before (or at) sim.time
+	for jname in jnames
+		if typeof(getfield(nullJob, jname)) <: Number
+			for i = 1:recentJobIndex
+				setfield!(jobs[i], jname, getfield(backupJobs[i], jname))
+			end
+		else
+			for i = 1:recentJobIndex
+				setfield!(jobs[i], jname, deepcopy(getfield(backupJobs[i], jname)))
+			end
+		end
+		for i = 1:recentJobIndex
+			tlength = length(jobs[i].tasks)
+			for tname in tnames
+				if typeof(getfield(nullTask, tname)) <: Number
+					for j = 1:tlength
+						setfield!(jobs[i].tasks[j], tname, getfield(backupJobs[i].tasks[j], tname))
+					end
+				else
+					for j = 1:tlength
+						setfield!(jobs[i].tasks[j], tname, deepcopy(getfield(backupJobs[i].tasks[j], tname)))
+					end
+				end
+			end
+		end
 	end
 end

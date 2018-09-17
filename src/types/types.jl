@@ -19,23 +19,26 @@ end
 
 type Job
     index::Integer
+	workerIndex::Integer
+    tasks::Vector{FactoryTask}
 
 	location::Location
     nearestNodeIndex::Integer
     nearestNodeDist::Float
-	workerIndex::Integer
+
+    releaseTime::Float
+    dueTime::Float
+
     status::JobStatus
+    finished::Bool
 
     # for animation:
 	currentLoc::Location
 	movedLoc::Bool
 
-    tasks::Vector{FactoryTask}
-    finished::Bool
-    dueTime::Float
 
-    Job() = new(nullIndex,Location(),nullIndex,nullDist,nullIndex,nullJobStatus,Location(),false,[],false,nullTime)
-    Job(index::Integer,tasks::Vector{FactoryTask},dueTime::Float) = new(index,startingLoc,nullIndex,nullDist,nullIndex,nullJobStatus,Location(),false,deepcopy(tasks),false,dueTime)
+    Job() = new(nullIndex,nullIndex,[], Location(),nullIndex,nullDist, nullTime,nullTime, nullJobStatus,false, Location(),false)
+    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float) = new(index,nullIndex,deepcopy(tasks), startingLoc,nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,false, Location(),false)
 
 end
 
@@ -53,7 +56,7 @@ type ProductOrder
     index::Integer
     product::ProductType
     size::Integer
-    arrivalTime::Float
+    releaseTime::Float
     dueTime::Float
 
     ProductOrder() = new(nullIndex,nullProductType,nullIndex,nullTime)
@@ -103,6 +106,19 @@ type Machine
     Machine() = new(nullIndex,nullMachineType,Location(),nullIndex,false)
 end
 
+type Resimulation
+	# parameters:
+	use::Bool # true if resimulating (will follow event trace), false otherwise
+	timeTolerance::Float
+
+	events::Vector{Event}
+	eventsChildren::Vector{Vector{Event}} # eventsChildren[i] gives events that are children of event i
+	prevEventIndex::Int # index of previous event in events field
+
+	Resimulation() = new(false, 0.0,
+		[], [], nullIndex)
+end
+
 type Simulation
 	startTime::Float
 	time::Float
@@ -132,6 +148,7 @@ type Simulation
 	eventIndex::Integer # index of event in events that have occurred
 	queuedTaskList::Vector{FactoryTask} # keep track of queued calls. Calls can be queued after call arrivalTime + dispatchDelay
 
+    resim::Resimulation
 
 	# for animation:
 	currentTasks::Set{FactoryTask} # all calls between arrival and service finish at current time
@@ -157,6 +174,7 @@ type Simulation
 		[],Dict(),[], [], [], [], false,
         0,0,
 		[], 0, [],
+        Resimulation(),
 		Set(), Set(),
 		"", "", Dict(), Dict(), IOStream(""),
 		false,
