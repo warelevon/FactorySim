@@ -29,7 +29,7 @@ end
 function readFactConfig(factConfigFilename::String)
 	# read gen config xml file
 	rootElt = xmlFileRoot(factConfigFilename)
-	println("rootElt is:", name(rootElt)) # Debugging
+	#println("rootElt is:", name(rootElt)) # Debugging
 	@assert(name(rootElt) == "simConfig", string("xml root has incorrect name: ", name(rootElt)))
 
 	factConfig = FactConfig()
