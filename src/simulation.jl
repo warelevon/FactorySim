@@ -251,7 +251,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		job.workerIndex=nullIndex
 		job.status = jobProcessed
 		job.machineArrivalTime=nullTime
-		job.currentLoc = machine.outputLocation
+		job.currentLoc = deepcopy(machine.outputLocation)
 		task=event.task
 
 		task.isComplete = true

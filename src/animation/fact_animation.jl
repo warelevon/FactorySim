@@ -111,8 +111,8 @@ function updateJobLocation!(sim::Simulation, job::Job)
 	elseif job.status == jobAtMachine
 		task = job.tasks[job.taskIndex]
 		machine = sim.machines[task.machineIndex]
-		oLoc = machine.outputLocation
-		iLoc = machine.inputLocation
+		oLoc = deepcopy(machine.outputLocation)
+		iLoc = deepcopy(machine.inputLocation)
 		jobProg = sim.time - job.machineArrivalTime
 		jobTotal = task.withoutWorker
 		jobPerc = jobProg/jobTotal
@@ -246,6 +246,6 @@ function runAnimServer(port::Int)
 end
 
 # JSON.lower for various types, to reduce length of string returned from json function
-JSON.lower(w::Worker) = Dict("index" => w.index, "currentLoc" => w.currentLoc)
+JSON.lower(w::Worker) = Dict("index" => w.index, "currentLoc" => w.currentLoc, "status" => w.status)
 JSON.lower(j::Job) = Dict("index" => j.index, "currentLoc" => j.currentLoc)
 JSON.lower(m::Machine) = Dict("index" => m.index, "location" => m.location, "machineType" => m.machineType)

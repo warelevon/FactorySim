@@ -7,7 +7,6 @@ productType,productName,
 1,"basicRacket"
 2,"proRacket"
 ,
-
 basicRacket,4,,
 productType,machineType,withWorker,withoutWorker,
 1,1,1,20

@@ -69,11 +69,15 @@
 	<div id="map_id" class="map"></div>
 	<div id="map_legend" class="legend">
 		<div><h3>Legend</h3></div>
-		<div><img id="image_worker"/>worker</div>
+		<div>workers</div>
+		<div><img id="image_worker_free"/>free worker</div>
+		<div><img id="image_worker_busy"/>busy worker</div>
 		<div><img id="image_job"/>job</div>
 		<div>machine types:</div>
 		<div><img id="image_machine_robot"/>robot</div>
-		<div><img id="image_machine_workbench"/>workbench</div>
+		<div><img id="image_machine_paintBench"/>paintBench</div>
+		<div><img id="image_machine_assembleBench"/>assembleBench</div>
+		<div><img id="image_machine_boxing"/>boxing</div>
 	</div>
 	<div id="menu" class="menu">
 		<div align="center">
@@ -146,7 +150,7 @@
 					break;
 				case "add_worker":
 					var w = msgObj.worker
-					addWorker(w.index, w.currentLoc.y, w.currentLoc.x)
+					addWorker(w.index, w.currentLoc.y, w.currentLoc.x, w.status)
 					break;
 				case "move_worker":
 					var w = msgObj.worker
@@ -430,7 +434,8 @@
 		function updateMarkerIcons() {
 			// set icons of existing markers
 			for (i in workers) {
-				workers[i].marker.setIcon(icons.worker);
+				workerIcon = icons[workers[i].iconName];
+				workers[i].marker.setIcon(workerIcon);
 			}
 			for (i in jobs) {
 				jobs[i].marker.setIcon(icons.job);
@@ -446,13 +451,20 @@
 
 		var workers = []
 
-		function addWorker(id, lat, lon) {
-			workers[workers.length] = new worker(id, lat, lon);
+		function addWorker(id, lat, lon, status) {
+			workers[workers.length] = new worker(id, lat, lon, status);
 		}
 
-		function worker(id, lat, lon) {
+		function worker(id, lat, lon, status) {
 			this.id = id;
-			this.marker = markerIcon(icons.worker, lat, lon, "Worker " + id);
+			this.iconName = "";
+			if (status == "workerIdle") {
+				this.iconName = "worker_free"
+			}else {
+				this.iconName = "worker_busy"
+			}
+			workerIcon = icons[this.iconName]
+			this.marker = markerIcon(workerIcon, lat, lon, "Worker " + id);
 		}
 
 		function moveWorker(id, lat, lon) {
@@ -466,6 +478,7 @@
 				}
 
 			}
+			updateMarkerIcons();
 		}
 
 		function removeWorkers() {
