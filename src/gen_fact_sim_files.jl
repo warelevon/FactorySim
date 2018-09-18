@@ -93,29 +93,29 @@ function runFactConfig(factConfigFilename::String; overwriteOutputPath::Bool = f
 
 	println("Generation mode: ", factConfig.mode)
 	# make productOrders
-	productOrders2 = makeOrders(factConfig) ## generated from function
+	productOrders = makeOrders(factConfig) ## generated from function
 
 	# save all
 	println("Saving output to: ", factConfig.outputPath)
-	FactorySim.writeOrdersFile(factConfig.productOrdersFileName, factConfig.startTime, productOrders2)
+	FactorySim.writeOrdersFile(factConfig.productOrdersFileName, factConfig.startTime, productOrders)
 end
 
 ## Based off JEMSS makeCalls function, changed to orders for our project structure
 function makeOrders(factConfig::FactConfig)
-	productOrders2 = Vector{ProductOrder}(factConfig.numOrders)
+	productOrders = Vector{ProductOrder}(factConfig.numOrders)
 
 	# factConfig.startTime is the the number of seconds after 00:00 today
 	currentTime = floor(Dates.DateTime(Dates.now()), Dates.Hour(24)) + Dates.Second(factConfig.startTime)
 	# first call will arrive at genConfig.startTime + rand(genConfig.interarrivalTimeDistrRng)
 	for i = 1:factConfig.numOrders
 		currentTime += Dates.Second(round(rand(factConfig.interarrivalTimeDistrRng)*24*3600)) # apply time step (exponential dist)
-		productOrders2[i] = ProductOrder()
-		productOrders2[i].index = i
-		productOrders2[i].product = ProductType(rand(factConfig.productOrderTypeDistrRng)) #categorical dist
-		productOrders2[i].size = (rand(factConfig.productOrdersizeDistrRng)) #discrete uniform dist
-		productOrders2[i].releaseTime = Dates.datetime2unix.(currentTime)
+		productOrders[i] = ProductOrder()
+		productOrders[i].index = i
+		productOrders[i].product = ProductType(rand(factConfig.productOrderTypeDistrRng)) #categorical dist
+		productOrders[i].size = (rand(factConfig.productOrdersizeDistrRng)) #discrete uniform dist
+		productOrders[i].releaseTime = Dates.datetime2unix.(currentTime)
 		# Current time plus (dueTime-releaseTime)
-		productOrders2[i].dueTime = Dates.datetime2unix.(currentTime + Dates.Second(round(rand(factConfig.dueTimeDistrRng)*24*3600))) #triangular dist
+		productOrders[i].dueTime = Dates.datetime2unix.(currentTime + Dates.Second(round(rand(factConfig.dueTimeDistrRng)*24*3600))) #triangular dist
 	end
-	return productOrders2
+	return productOrders
 end

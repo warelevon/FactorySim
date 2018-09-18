@@ -2,8 +2,8 @@ miscData,1,,
 startTime,
 0
 ,
-productOrders2,20,,
-index,product,size,arrivalTime,dueTime,
+productOrders,20,,
+index,product,size,releaseTime,dueTime,
 1,1,1,18-09-2018T01:52:40,24-09-2018T16:51:52
 2,2,7,18-09-2018T04:22:28,25-09-2018T11:43:33
 3,1,10,18-09-2018T05:10:02,21-09-2018T12:14:33
