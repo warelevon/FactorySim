@@ -70,8 +70,10 @@
 	<div id="map_legend" class="legend">
 		<div><h3>Legend</h3></div>
 		<div><img id="image_worker"/>worker</div>
-		<div><img id="image_machine"/>machine</div>
 		<div><img id="image_job"/>job</div>
+		<div>machine types:</div>
+		<div><img id="image_machine_robot"/>robot</div>
+		<div><img id="image_machine_workbench"/>workbench</div>
 	</div>
 	<div id="menu" class="menu">
 		<div align="center">
@@ -140,7 +142,7 @@
 					break;
 				case "add_machine":
 					var m = msgObj.machine
-					addMachine(m.index, m.location.y, m.location.x)
+					addMachine(m.index, m.location.y, m.location.x, m.machineType)
 					break;
 				case "add_worker":
 					var w = msgObj.worker
@@ -434,7 +436,8 @@
 				jobs[i].marker.setIcon(icons.job);
 			}
 			for (i in machines) {
-				machines[i].marker.setIcon(icons.machine);
+				machineIcon = icons[machines[i].iconName];
+				machines[i].marker.setIcon(machineIcon);
 			}
 		}
 
@@ -523,13 +526,26 @@
 
 		var machines = []
 
-		function addMachine(id, lat, lon) {
-			machines[machines.length] = new machine(id, lat, lon);
+		function addMachine(id, lat, lon, machineType) {
+			if (id in machines) {
+				console.log("error: machine with id", id, "exists already") // debugging
+				return
+			}
+			machines[id] = new machine(id, lat, lon, machineType)
 		}
 
-		function machine(id, lat, lon) {
+		function machine(id, lat, lon, machineType) {
 			this.id = id;
-			this.marker = markerIcon(icons.machine, lat, lon, "Machine " + id);
+			this.iconName = "";
+			if (machineType == "robot") {
+				this.iconName = "machine_robot"
+			} else if (machineType == "workbench") {
+				this.iconName = "machine_workbench"
+			} else {
+				throw new Error("Undefined machine type: " + machineType)
+			}
+			machineIcon = icons[this.iconName]
+			this.marker = markerIcon(machineIcon, lat, lon, "Machine " + id);
 		}
 
 		////////////////////////////////////////////////////////////////

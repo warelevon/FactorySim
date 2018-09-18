@@ -13,7 +13,14 @@
 			"popupAnchor":[0,0]
 		}
 	},
-	"machine": {
+	"machine_robot": {
+		"options": {
+			"iconSize":[46,46],
+			"iconAnchor":[24,26],
+			"popupAnchor":[0,0]
+		}
+	},
+	"machine_workbench": {
 		"options": {
 			"iconSize":[46,46],
 			"iconAnchor":[24,26],

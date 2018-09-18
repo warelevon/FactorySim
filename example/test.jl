@@ -4,14 +4,14 @@ factoryTask_dict = Dict{FactorySim.ProductType,Array{FactorySim.FactoryTask,1}}(
 factoryTasks=[]
 for i= 1:3
     push!(factoryTasks,FactoryTask())
-    factoryTasks[i].machineType = workStation
+    factoryTasks[i].machineType = workbench
 end
 factoryTasks[2].machineType = robot
 factoryTask_dict[chair] = factoryTasks
 factoryTasks=[]
 for i= 1:4
     push!(factoryTasks,FactoryTask())
-    factoryTasks[i].machineType = workStation
+    factoryTasks[i].machineType = workbench
 end
 factoryTasks[3].machineType = robot
 factoryTask_dict[table]=factoryTasks

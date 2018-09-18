@@ -248,4 +248,4 @@ end
 # JSON.lower for various types, to reduce length of string returned from json function
 JSON.lower(w::Worker) = Dict("index" => w.index, "currentLoc" => w.currentLoc)
 JSON.lower(j::Job) = Dict("index" => j.index, "currentLoc" => j.currentLoc)
-JSON.lower(m::Machine) = Dict("index" => m.index, "location" => m.location)
+JSON.lower(m::Machine) = Dict("index" => m.index, "location" => m.location, "machineType" => m.machineType)
