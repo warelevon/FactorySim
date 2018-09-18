@@ -287,7 +287,7 @@ function initWorker!(sim::Simulation, worker::Worker)
 	# to a node (nearest to station), then to station, before simulation began
 	worker.route = Route()
 	worker.route.startLoc = Location()
-	worker.route.endLoc = sim.workerStartingLocation
+	worker.route.endLoc = deepcopy(sim.workerStartingLocation)
 	worker.route.endTime = sim.startTime
 	worker.route.endFNode = sim.startNodeIndex
 	worker.status = workerIdle
@@ -355,11 +355,11 @@ function initSimulation(configFilename::String;
 
 
 	sim.workers = readWorkersFile(simFilePath("workers"))
-	(sim.productOrders, sim.startTime) = readProductOrdersFile(simFilePath("productOrders"))
+	(sim.productOrders, sim.startTime, sim.workerStartingLocation) = readProductOrdersFile(simFilePath("productOrders"))
 	sim.time = sim.startTime
 	sim.machines = readMachinesFile(simFilePath("machines"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
-	sim.jobs = decomposeOrder(sim.productOrders,sim.productDict)
+	sim.jobs = decomposeOrder(sim.workerStartingLocation, sim.productOrders,sim.productDict)
 
 	assert(all(j->j.releaseTime>=sim.startTime, sim.jobs))
 
@@ -389,6 +389,9 @@ function initSimulation(configFilename::String;
 	sim.map = readMapFile(simFilePath("map"))
 	map = sim.map # shorthand
 	sim.travel = readTravelFile(simFilePath("travel"))
+
+	sim.backgroundLoc.x = (map.xMax-map.xMin)/2
+	sim.backgroundLoc.y = (map.yMax-map.yMin)/2
 
 	initTime(t)
 
@@ -496,7 +499,7 @@ function initSimulation(configFilename::String;
 		addEvent!(sim.eventList, j.tasks[1], j.releaseTime)
 	end
 
-	sim.workerStartingLocation = startingLoc
+
 	(sim.startNodeIndex, _) = findNearestNodeInGrid(map, grid, fGraph.nodes, sim.workerStartingLocation)
 
 

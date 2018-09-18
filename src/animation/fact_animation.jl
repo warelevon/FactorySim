@@ -26,7 +26,12 @@ function fact_animate(; port::Int = 8001, configFilename::String = "", openWindo
 		openWindow ? openLocalhost(port) : println("waiting for window with port $port to be opened")
 	end
 end
-
+function animAddBackground(client::WebSocket, sim::Simulation)
+	messageDict = JEMSS.createMessageDict("add_background")
+	messageDict["background"] = sim.backgroundLoc
+	write(client, json(messageDict))
+	delete!(messageDict, "background")
+end
 function animAddMachines(client::WebSocket, sim::Simulation)
 	messageDict = JEMSS.createMessageDict("add_machine")
 	for m in sim.machines
@@ -147,6 +152,7 @@ wsh = WebSocketHandler() do req::Request, client::WebSocket
 	write(client, json(messageDict))
 
 	animFactSetIcons(client) # set icons before adding items to map
+	animAddBackground(client, sim)
 	JEMSS.animAddNodes(client, sim.net.fGraph.nodes)
 	JEMSS.animAddArcs(client, sim.net) # add first, should be underneath other objects
 	JEMSS.animSetArcSpeeds(client, sim.map, sim.net)

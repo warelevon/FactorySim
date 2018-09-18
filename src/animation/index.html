@@ -144,6 +144,10 @@
 					var arc = msgObj.arc
 					setArcSpeed(arc.index, msgObj.speed)
 					break;
+				case "add_background":
+					var b = msgObj.background
+					addBackground(b.y, b.x)
+					break;
 				case "add_machine":
 					var m = msgObj.machine
 					addMachine(m.index, m.location.y, m.location.x, m.machineType)
@@ -444,6 +448,7 @@
 				machineIcon = icons[machines[i].iconName];
 				machines[i].marker.setIcon(machineIcon);
 			}
+			background.marker.setIcon(icons.background);
 		}
 
 		////////////////////////////////////////////////////////////////
@@ -478,7 +483,6 @@
 				}
 
 			}
-			updateMarkerIcons();
 		}
 
 		function removeWorkers() {
@@ -488,6 +492,16 @@
 			workers = []
 		}
 
+		////////////////////////////////////////////////////////////////
+		// background
+		function addBackground(lat, lon) {
+			background = new background(lat, lon);
+			background.marker.bringToBack();
+		}
+
+		function background(lat, lon) {
+			this.marker = markerIcon(icons.background, lat, lon, "Background");
+		}
 		////////////////////////////////////////////////////////////////
 		// jobs
 

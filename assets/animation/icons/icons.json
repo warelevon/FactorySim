@@ -22,22 +22,22 @@
 	},
 	"machine_robot": {
 		"options": {
-			"iconSize":[46,46],
-			"iconAnchor":[24,26],
+			"iconSize":[184,184],
+			"iconAnchor":[96,104],
 			"popupAnchor":[0,0]
 		}
 	},
 	"machine_paintBench": {
 		"options": {
 			"iconSize":[92,92],
-			"iconAnchor":[24,26],
+			"iconAnchor":[48,52],
 			"popupAnchor":[0,0]
 		}
 	},
 	"machine_assembleBench": {
 		"options": {
 			"iconSize":[92,92],
-			"iconAnchor":[24,26],
+			"iconAnchor":[48,52],
 			"popupAnchor":[0,0]
 		}
 	},
@@ -45,6 +45,13 @@
 		"options": {
 			"iconSize":[46,46],
 			"iconAnchor":[24,26],
+			"popupAnchor":[0,0]
+		}
+	},
+	"background": {
+		"options": {
+			"iconSize":[3098,1528],
+			"iconAnchor":[1549,764],
 			"popupAnchor":[0,0]
 		}
 	}

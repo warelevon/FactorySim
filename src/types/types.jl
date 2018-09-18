@@ -39,7 +39,7 @@ type Job
 
 
     Job() = new(nullIndex,nullIndex,nullIndex,[], nullIndex,nullDist, nullTime,nullTime, nullJobStatus,nullTime,false, Location(),false)
-    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float) = new(index,1,nullIndex,deepcopy(tasks), nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,nullTime,false, startingLoc,false)
+    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float, location::Location) = new(index,1,nullIndex,deepcopy(tasks), nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,nullTime,false, deepcopy(location),false)
 
 end
 
@@ -156,6 +156,7 @@ type Simulation
 	# for animation:
 	currentJobs::Set{Job} # all calls between arrival and service finish at current time
 	previousJobs::Set{Job} # calls in currentCalls for previous frame
+    backgroundLoc::Location
 
 	# files/folders:
 	inputPath::String
@@ -178,7 +179,7 @@ type Simulation
         0,0,
 		[], 0, [],
         Resimulation(),
-		Set(), Set(),
+		Set(), Set(),Location(),
 		"", "", Dict(), Dict(), IOStream(""),
 		false,
 		false, false)

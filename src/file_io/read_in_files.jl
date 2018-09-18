@@ -78,6 +78,9 @@ function readProductOrdersFile(filename::String)
     tables = readTablesFromFile(filename)
     table = tables["miscData"]
     startTime = Dates.datetime2unix.(DateTime(table.columns["startTime"][1],"d-m-yTH:M:S"))/60/60/24
+    startingLocation = Location()
+    startingLocation.x = table.columns["startLocx"][1]
+    startingLocation.y = table.columns["startLocy"][1]
 
     table = tables["productOrders"]
     n = size(table.data,1) # number of orders
@@ -95,7 +98,7 @@ function readProductOrdersFile(filename::String)
         productOrders[i].dueTime = Dates.datetime2unix.(DateTime(c["dueTime"][i],"d-m-yTH:M:S"))/60/60/24 #TH:M:S.s
         assert(productOrders[i].dueTime > productOrders[i].releaseTime) # Make sure that each order is due after it arrives
     end
-    return productOrders, startTime
+    return productOrders, startTime, startingLocation
 end
 
 function readMachinesFile(filename::String)

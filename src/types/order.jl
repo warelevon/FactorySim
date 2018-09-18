@@ -1,9 +1,9 @@
-function decomposeOrder(orderList::Vector{ProductOrder},product_dict::Dict{ProductType,Vector{FactoryTask}})
+function decomposeOrder(location::Location, orderList::Vector{ProductOrder},product_dict::Dict{ProductType,Vector{FactoryTask}})
     jobList = Vector{Job}()
     i=1
     for order in orderList
         while order.size> 0
-            job = Job(i,product_dict[order.product],order.releaseTime,order.dueTime)
+            job = Job(i,product_dict[order.product],order.releaseTime,order.dueTime, location)
             for j=1:length(job.tasks)
                 job.tasks[j].jobIndex=i
                 job.tasks[j].parentIndex=(j==1 ? nullIndex : j-1)

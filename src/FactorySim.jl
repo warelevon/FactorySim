@@ -50,8 +50,7 @@ export
     ProductType, nullProductType, chair, table,
     EventType, nullEvent, taskReleased, checkAssign, assignClosestAvailableWorker, moveToJob, arriveAtJob, moveJobToMachine, startMachineProcess, releaseWorker, finishTask,
     WorkerStatus, nullWorkerStatus, workerIdle, workerMovingToJob, workerAtJob, workerMovingToMachine, workerProcessingJob,
-    JobStatus, nullJobStatus, jobQueued, jobWaitingForWorker, jobGoingToMachine, jobAtMachine, jobProcessed,
-    startingLoc
+    JobStatus, nullJobStatus, jobQueued, jobWaitingForWorker, jobGoingToMachine, jobAtMachine, jobProcessed
 
 
 include("defs.jl")

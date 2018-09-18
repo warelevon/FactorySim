@@ -1,6 +1,6 @@
 miscData,1,,
-startTime,
-19-09-2018T01:52:40
+startTime,startLocx,startLocy,
+19-09-2018T01:52:40,0.1,0.1
 ,
 productOrders,20,,
 index,productType,size,releaseTime,dueTime,
