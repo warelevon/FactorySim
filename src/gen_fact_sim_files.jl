@@ -104,17 +104,18 @@ end
 function makeOrders(factConfig::FactConfig)
 	productOrders2 = Vector{ProductOrder}(factConfig.numOrders)
 
-	currentTime = factConfig.startTime
+	# factConfig.startTime is the the number of seconds after 00:00 today
+	currentTime = floor(Dates.DateTime(Dates.now()), Dates.Hour(24)) + Dates.Second(factConfig.startTime)
 	# first call will arrive at genConfig.startTime + rand(genConfig.interarrivalTimeDistrRng)
 	for i = 1:factConfig.numOrders
-		currentTime += rand(factConfig.interarrivalTimeDistrRng) # apply time step (exponential dist)
-
+		currentTime += Dates.Second(round(rand(factConfig.interarrivalTimeDistrRng)*24*3600)) # apply time step (exponential dist)
 		productOrders2[i] = ProductOrder()
 		productOrders2[i].index = i
 		productOrders2[i].product = ProductType(rand(factConfig.productOrderTypeDistrRng)) #categorical dist
 		productOrders2[i].size = (rand(factConfig.productOrdersizeDistrRng)) #discrete uniform dist
-		productOrders2[i].arrivalTime = currentTime
-		productOrders2[i].dueTime = currentTime + rand(factConfig.dueTimeDistrRng) #triangular dist
+		productOrders2[i].releaseTime = Dates.datetime2unix.(currentTime)
+		# Current time plus (dueTime-releaseTime)
+		productOrders2[i].dueTime = Dates.datetime2unix.(currentTime + Dates.Second(round(rand(factConfig.dueTimeDistrRng)*24*3600))) #triangular dist
 	end
 	return productOrders2
 end

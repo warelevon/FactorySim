@@ -23,10 +23,11 @@
 	<sim>
 		<numOrders>20</numOrders>
 		<productOrderDistributions>
+			<!-- period is in days-->
 			<interarrivalTime seed="0">Exponential(1/10)</interarrivalTime>
 			<productOrderType seed="0">Categorical([0.57, 0.43])</productOrderType>
 			<productOrderSize seed="0">DiscreteUniform(1,10)</productOrderSize>
-			<!-- distribution is dueTime - arrivalTime -->
+			<!-- distribution is dueTime - arrivalTime between 1 and 9 days-->
 			<dueTime seed="0">TriangularDist(1,9,5)</dueTime>
 		</productOrderDistributions>
 		<!-- misc: -->
