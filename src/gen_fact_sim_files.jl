@@ -1,7 +1,7 @@
 # for generating simulation objects based on a config file
 
 type FactConfig
-	outputPath::String
+	inputPath::String
 	mode::String
 
 	# Output filenames
@@ -33,12 +33,12 @@ function readFactConfig(factConfigFilename::String)
 	@assert(name(rootElt) == "simConfig", string("xml root has incorrect name: ", name(rootElt)))
 
 	factConfig = FactConfig()
-	factConfig.outputPath = abspath(eltContentInterpVal(rootElt, "outputPath"))
+	factConfig.inputPath = abspath(eltContentInterpVal(rootElt, "inputPath"))
 	factConfig.mode = eltContent(rootElt, "mode")
 
-	# output filenames
+	# input filenames
 	simFilesElt = findElt(rootElt, "simFiles")
-	simFilePath(filename::String) = joinpath(factConfig.outputPath, eltContent(simFilesElt, filename))
+	simFilePath(filename::String) = joinpath(factConfig.inputPath, eltContent(simFilesElt, filename))
 	factConfig.productOrdersFileName = simFilePath("productOrders")
 
 	# read sim parameters
@@ -69,34 +69,34 @@ function readFactConfig(factConfigFilename::String)
 end
 
 
-function runFactConfig(factConfigFilename::String; overwriteOutputPath::Bool = false)
+function runFactConfig(factConfigFilename::String; overwriteInputPath::Bool = false)
 	factConfig = readFactConfig(factConfigFilename)
 
-	if isdir(factConfig.outputPath) && !overwriteOutputPath
-		println("Output path already exists: ", factConfig.outputPath)
-		print("Delete folder contents and continue anyway? (y = yes): ")
-		response = chomp(readline())
-		if response != "y"
-			println("stopping")
-			return
-		else
-			overwriteOutputPath = true
-		end
-	end
-	if isdir(factConfig.outputPath) && overwriteOutputPath
-		println("Deleting folder contents: ", factConfig.outputPath)
-		rm(factConfig.outputPath; recursive=true)
-	end
-	if !isdir(factConfig.outputPath)
-		mkdir(factConfig.outputPath)
-	end
+#	if isdir(factConfig.inputPath) && !overwriteInputPath
+#		println("input path already exists: ", factConfig.inputPath)
+#		print("Delete folder contents and continue anyway? (y = yes): ")
+#		response = chomp(readline())
+#		if response != "y"
+#			println("stopping")
+#			return
+#		else
+#			overwriteInputPath = true
+#		end
+#	end
+#	if isdir(factConfig.inputPath) && overwriteInputPath
+#		println("Deleting folder contents: ", factConfig.inputPath)
+#		rm(factConfig.inputPath; recursive=true)
+#	end
+#	if !isdir(factConfig.inputPath)
+#		mkdir(factConfig.inputPath)
+#	end
 
 	println("Generation mode: ", factConfig.mode)
 	# make productOrders
 	productOrders = makeOrders(factConfig) ## generated from function
 
 	# save all
-	println("Saving output to: ", factConfig.outputPath)
+	println("Saving input to: ", factConfig.inputPath)
 	FactorySim.writeOrdersFile(factConfig.productOrdersFileName, factConfig.startTime, productOrders)
 end
 
