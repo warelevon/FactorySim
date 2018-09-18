@@ -138,8 +138,8 @@ function readProductDictFile(filename::String)
         for i = 1:n
             factTaskList[i] = FactoryTask()
             factTaskList[i].machineType = MachineType(c["machineType"][i])
-            factTaskList[i].withWorker = c["withWorker"][i]
-            factTaskList[i].withoutWorker = c["withoutWorker"][i]
+            factTaskList[i].withWorker = c["withWorker"][i]/60/24
+            factTaskList[i].withoutWorker = c["withoutWorker"][i]/60/24
         end
         productDict[key]= deepcopy(factTaskList)
     end
