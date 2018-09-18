@@ -141,6 +141,7 @@ type Simulation
 	workers::Vector{Worker}
 	machines::Vector{Machine}
 	workerFree::Bool
+    tested::Bool
 
     # Bugfixing
     numCompletedTasks::Integer
@@ -173,7 +174,7 @@ type Simulation
 
 	Simulation() = new(nullTime, nullTime, nullTime,
 		Network(), Travel(), Map(), Grid(),nullIndex,Location(),
-		[],Dict(),[], [], [], [], false,
+		[],Dict(),[], [], [], [], false, false,
         0,0,
 		[], 0, [],
         Resimulation(),

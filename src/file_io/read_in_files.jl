@@ -77,7 +77,7 @@ end
 function readProductOrdersFile(filename::String)
     tables = readTablesFromFile(filename)
     table = tables["miscData"]
-    startTime = Dates.datetime2unix.(DateTime(table.columns["startTime"][1],"d-m-yTH:M:S"))
+    startTime = Dates.datetime2unix.(DateTime(table.columns["startTime"][1],"d-m-yTH:M:S"))/60/60/24
 
     table = tables["productOrders"]
     n = size(table.data,1) # number of orders
@@ -91,8 +91,8 @@ function readProductOrdersFile(filename::String)
         productOrders[i] = ProductOrder()
         productOrders[i].product = ProductType(c["productType"][i])
         productOrders[i].size = c["size"][i]
-        productOrders[i].releaseTime = Dates.datetime2unix.(DateTime(c["releaseTime"][i],"d-m-yTH:M:S")) #TH:M:S.s
-        productOrders[i].dueTime = Dates.datetime2unix.(DateTime(c["dueTime"][i],"d-m-yTH:M:S")) #TH:M:S.s
+        productOrders[i].releaseTime = Dates.datetime2unix.(DateTime(c["releaseTime"][i],"d-m-yTH:M:S"))/60/60/24 #TH:M:S.s
+        productOrders[i].dueTime = Dates.datetime2unix.(DateTime(c["dueTime"][i],"d-m-yTH:M:S"))/60/60/24 #TH:M:S.s
         assert(productOrders[i].dueTime > productOrders[i].releaseTime) # Make sure that each order is due after it arrives
     end
     return productOrders, startTime

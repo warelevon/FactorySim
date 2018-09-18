@@ -105,7 +105,8 @@ function updateJobLocation!(sim::Simulation, job::Job)
 		worker = sim.workers[job.workerIndex]
 		job.movedLoc = worker.movedLoc
 		if worker.movedLoc
-			job.currentLoc = worker.currentLoc
+			job.currentLoc.x =worker.currentLoc.x
+			job.currentLoc.y =worker.currentLoc.y
 		end
 	elseif job.status == jobAtMachine
 		task = job.tasks[job.taskIndex]
