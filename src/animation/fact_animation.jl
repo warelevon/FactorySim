@@ -95,7 +95,7 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
-	sim.previousJobs = copy(sim.currentJobs) # update previousCalls
+	sim.previousJobs = deepcopy(sim.currentJobs) # update previousCalls
 end
 
 # update call current location
