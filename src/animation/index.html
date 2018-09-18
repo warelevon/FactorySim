@@ -539,9 +539,13 @@
 			this.iconName = "";
 			if (machineType == "robot") {
 				this.iconName = "machine_robot"
-			} else if (machineType == "workbench") {
-				this.iconName = "machine_workbench"
-			} else {
+			} else if (machineType == "paintBench") {
+				this.iconName = "machine_paintBench"
+			} else if (machineType == "assembleBench") {
+				this.iconName = "machine_assembleBench"
+			}else if (machineType == "boxing") {
+				this.iconName = "machine_boxing"
+			}else {
 				throw new Error("Undefined machine type: " + machineType)
 			}
 			machineIcon = icons[this.iconName]

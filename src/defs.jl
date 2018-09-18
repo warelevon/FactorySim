@@ -20,7 +20,7 @@ const nullDist = -1.0
 const startingLoc = Location(0.1,0.1)
 
 
-@enum MachineType nullMachineType=0 robot=1 workbench=2
+@enum MachineType nullMachineType=0 robot=1 assembleBench=2 paintBench=3 boxing=4
 
 @enum ProductType nullProductType=0 chair=1 table=2
 
