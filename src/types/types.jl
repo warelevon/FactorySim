@@ -108,6 +108,16 @@ type Machine
     Machine() = new(nullIndex,nullMachineType,Location(),Location(),Location(),nullIndex,false)
 end
 
+type Background
+    xMin::Float
+    yMin::Float
+    xMax::Float
+    yMax::Float
+
+    imgUrl::String
+
+    Background() = new(nullX,nullY,nullX,nullY,"")
+end
 type Resimulation
 	# parameters:
 	use::Bool # true if resimulating (will follow event trace), false otherwise
@@ -156,7 +166,7 @@ type Simulation
 	# for animation:
 	currentJobs::Set{Job} # all calls between arrival and service finish at current time
 	previousJobs::Set{Job} # calls in currentCalls for previous frame
-    backgroundLoc::Location
+    background::Background
 
 	# files/folders:
 	inputPath::String
@@ -179,7 +189,7 @@ type Simulation
         0,0,
 		[], 0, [],
         Resimulation(),
-		Set(), Set(),Location(),
+		Set(), Set(),Background(),
 		"", "", Dict(), Dict(), IOStream(""),
 		false,
 		false, false)

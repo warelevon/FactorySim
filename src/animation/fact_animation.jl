@@ -4,14 +4,24 @@ global animPort = nullIndex # localhost port for animation, to be set
 
 
 
-function animFactSetIcons(client::WebSocket)
+function animSetIcons(client::WebSocket, sim::Simulation)
 	messageDict = JEMSS.createMessageDict("set_icons")
 	pngFileUrl(filename) = string("data:image/png;base64,", filename |> read |> base64encode)
 	iconPath = joinpath(@__DIR__, "..", "..", "assets", "animation", "icons")
 	icons = JSON.parsefile(joinpath(iconPath, "icons.json"))
 	# set iconUrl for each icon
 	for (name, icon) in icons
-		icon["options"]["iconUrl"] = pngFileUrl(joinpath(iconPath, string(name, ".png")))
+		if name =="background"
+			bg = sim.background
+			map = sim.map
+			(bg.xMin,bg.xMax,bg.yMin,bg.yMax) = (map.xMin,map.xMax,map.yMin,map.yMax)
+
+			sim.background.imgUrl =  pngFileUrl(joinpath(iconPath, string(name, ".png")))
+			Main.Juno.render(bg)
+			animSetBackground(client, sim)
+		else
+			icon["options"]["iconUrl"] = pngFileUrl(joinpath(iconPath, string(name, ".png")))
+		end
 	end
 	merge!(messageDict, icons)
 	write(client, json(messageDict))
@@ -26,9 +36,9 @@ function fact_animate(; port::Int = 8001, configFilename::String = "", openWindo
 		openWindow ? openLocalhost(port) : println("waiting for window with port $port to be opened")
 	end
 end
-function animAddBackground(client::WebSocket, sim::Simulation)
-	messageDict = JEMSS.createMessageDict("add_background")
-	messageDict["background"] = sim.backgroundLoc
+function animSetBackground(client::WebSocket, sim::Simulation)
+	messageDict = JEMSS.createMessageDict("set_background")
+	messageDict["background"] = sim.background
 	write(client, json(messageDict))
 	delete!(messageDict, "background")
 end
@@ -151,8 +161,7 @@ wsh = WebSocketHandler() do req::Request, client::WebSocket
 	messageDict["time"] = sim.startTime
 	write(client, json(messageDict))
 
-	animFactSetIcons(client) # set icons before adding items to map
-	animAddBackground(client, sim)
+	animSetIcons(client, sim) # set icons before adding items to map
 	JEMSS.animAddNodes(client, sim.net.fGraph.nodes)
 	JEMSS.animAddArcs(client, sim.net) # add first, should be underneath other objects
 	JEMSS.animSetArcSpeeds(client, sim.map, sim.net)
@@ -191,7 +200,7 @@ wsh = WebSocketHandler() do req::Request, client::WebSocket
 
 		elseif msgType == "update_icons"
 			try
-				animFactSetIcons(client)
+				animSetIcons(client)
 			catch e
 				warn("Could not update animation icons")
 				warn(e)

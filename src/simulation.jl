@@ -390,9 +390,6 @@ function initSimulation(configFilename::String;
 	map = sim.map # shorthand
 	sim.travel = readTravelFile(simFilePath("travel"))
 
-	sim.backgroundLoc.x = (map.xMax-map.xMin)/2
-	sim.backgroundLoc.y = (map.yMax-map.yMin)/2
-
 	initTime(t)
 
 	##################
