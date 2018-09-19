@@ -118,6 +118,15 @@ type OptimNode
     OptimNode() = new(nullIndex,nullIndex,nullIndex)
 end
 
+type OptimArc
+    index::Integer
+    sourceNode::Integer
+    destinationNode::Integer
+    weight::Float
+
+    OptimArc() = new(nullIndex,nullIndex,nullIndex,nullDist)
+end
+
 type Background
     xMin::Float
     yMin::Float

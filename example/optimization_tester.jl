@@ -28,8 +28,8 @@ jobNumber = zeros(y,x)
 for i = 1:y
     jobNumber[i,:] = i
 end
-toDo = vec(reshape(toDo,1,length(toDo)))
-jobNumber = vec(reshape(jobNumber,1,length(jobNumber)))
+toDo1 = vec(reshape(toDo,1,length(toDo)))
+jobNumber = vec(reshape(transpose(jobNumber),1,length(jobNumber)))
 
 #remove the zero values
 r = find(toDo1 -> toDo1 == 0, toDo1)
@@ -38,37 +38,49 @@ for i = 1:length(r)
     toDo1 = deleteat!(toDo1,r[i])
     jobNumber = deleteat!(jobNumber,r[i])
 end
-rootElt = xmlFileRoot("C:\\Users\\dd\\.julia\\v0.6\\FactorySim\\example\\sim_config.xml") #hard coded for now
-simElt = findElt(rootElt, "sim")
-n = parse(Int, eltContent(simElt, "numMachines"))
-m = collect(1:n)
-nNodes = sum(mJCR)
+
+n=4
 
 # create OptimNode types to match the node index with the machine and job index
-optimNode = Vector{OptimNode}(nNodes)
-optimNode[1] = OptimNode()
-optimNode[1].index = 1
-optimNode[1].i = nullIndex
-optimNode[1].j = nullIndex
-optimNode[nNodes] = OptimNode()
-optimNode[nNodes].index = nNodes
-optimNode[nNodes].i = nullIndex
-optimNode[nNodes].j = nullIndex
+optimNodes = Vector{OptimNode}(nNodes+2)
+optimNodes[1] = OptimNode()
+optimNodes[1].index = 1
+optimNodes[1].machineTypeIndex = nullIndex
+optimNodes[1].jobIndex = nullIndex
+optimNodes[nNodes+2] = OptimNode()
+optimNodes[nNodes+2].index = nNodes
+optimNodes[nNodes+2].machineTypeIndex = nullIndex
+optimNodes[nNodes+2].jobIndex = nullIndex
 for i = 2:nNodes+1
-    optimNode[i] = OptimNode()
-    optimNode[i].index = i
-    optimNode[i].i = toDo1[i]
-    optimNode[i].j = jobNumber[i]
+    optimNodes[i] = OptimNode()
+    optimNodes[i].index = p
+    optimNodes[i].machineTypeIndex = toDo1[i-1]
+    optimNodes[i].jobIndex = jobNumber[i-1]
 end
-optimNode
+optimNodes
 
-
+# Create an optimArcType
+numArcs = length(weightsC)
+optimArcs = Vector{OptimArc}(numArcs)
+for i = 1:numArcs
+    optimArcs[i] = OptimArc()
+    optimArcs[i].index = weightsC[i]
+    optimArcs[i].sourceNode = sourcesC[i]
+    optimArcs[i].destinationNode = destinationsC[i]
+end
+optimArcs
 
 # Create a graph of the conjunctive arcs only
 (gc, eweights1) = createNetworkGraph(sourcesC,destinationsC,weightsC)
 
 ######################### will go in shifting_bottleneck.jl function
-#inputs gc, eweights1, nJpbs
+#inputs gc, eweights1, nJobs, simFilepath?
+rootElt = xmlFileRoot("C:\\Users\\dd\\.julia\\v0.6\\FactorySim\\example\\sim_config.xml") #hard coded for now
+simElt = findElt(rootElt, "sim")
+n = parse(Int, eltContent(simElt, "numMachines"))
+m = collect(1:n)
+
+
 ####### STEP 1:
 # Set  M_0
 m0 = Int64[]
@@ -85,17 +97,22 @@ else
 end
 @assert isinteger(a) && a>=0
 
-dijkstra_shortest_paths(gc,-eweights1,1)
+miNodes = filter(n -> n.i==1,optimNodes)
+length(miNodes)
 
+# Find the distances from the source node to all other nodes in graph
+r = dijkstra_shortest_paths(gc,-eweights1,1)
 #iterate through machines in the set m-m0
 for i=1:length(m)-length(m0)
     mDash = filter!(m->m≠a,m) #removes the machine m0
+    miNodes = filter(n -> n.i==1,optimNodes) #get the node index of machine 1 operations
     # generate the 1|rj|Lmax schedule for each machine in mDash
     #cols - mDash[i]
     #rows rj; pij; dj
-    for j=1:nJobs
-        r = zeros(3)
-        r[j] =
+    for j=1:length(miNodes)
+        r = zeros(length(miNodes))
+        r[j] = r.dists[miNodes[j]]
+        p[j] =
     end
 end
 
