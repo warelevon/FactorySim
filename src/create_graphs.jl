@@ -9,7 +9,7 @@ function createNetworkGraph(sim)
         numJobs+=1
         numTasks=0
         filteredTasks = filter(t ->!t.isComplete, j.tasks)
-        if !(j.status==nullJobstatus || j.status == jobQueued)
+        if !(j.status==nullJobStatus || j.status == jobQueued)
             shift!(filteredTasks)
         end
         for t in filteredTasks
@@ -19,14 +19,14 @@ function createNetworkGraph(sim)
         maxNumTasks = max(maxNumTasks,numTasks)
     end
     nodes = Vector{OptimNode}(numNodes)
-    g = simple_inclist(numNodes)
+    g = Graphs.simple_graph(numNodes)
     nodeInd = 2
     nodes[1] = OptimNode()
     nodes[1].index = 1
     nodeLookup = zeros(Integer,numJobs,maxNumTasks)
     for j in filter(j -> !j.finished,jobs)
         filteredTasks = filter(t ->!t.isComplete, j.tasks)
-        if !(j.status==nullJobstatus || j.status == jobQueued)
+        if !(j.status==nullJobStatus || j.status == jobQueued)
             shift!(filteredTasks)
         end
         for t in filteredTasks
@@ -44,7 +44,7 @@ function createNetworkGraph(sim)
     jobtypes = sort(unique(nodes[2:end-1] .|> [x->x.jobIndex]))
     ne=0
     for j in jobtypes
-        mactypes = sort(filter(n->n.jobIndex==j,nodes[2:end-1]) .|> [x->x.machineTypeIndex])
+        mactypes = sort(unique(filter(n->n.jobIndex==j,nodes[2:end-1]) .|> [x->x.machineTypeIndex]))
         for m in mactypes
             node = nodes[nodeLookup[j,m]]
             if m == mactypes[1]
@@ -55,7 +55,7 @@ function createNetworkGraph(sim)
                 Graphs.add_edge!(g,node.index,numNodes)
                 ne+=1
             else
-                Graphs.add_edge!(g,node.index,nodeLookup[j,findfirst(mactypes.>m)])
+                Graphs.add_edge!(g,node.index,nodeLookup[j,mactypes[(mactypes.>m)][1]])
                 ne+=1
             end
             for m2 in mactypes
@@ -66,7 +66,23 @@ function createNetworkGraph(sim)
             end
         end
     end
-    return g
+    arcs = Vector{OptimArc}(ne)
+    i=1
+    for e in Graphs.edges(g)
+        arcs[i] = OptimArc()
+        arcs[i].index = i
+        arcs[i].sourceIndex = Graphs.source(e,g)
+        arcs[i].targetIndex = Graphs.target(e,g)
+        if arcs[i].sourceIndex == 1
+            arcs[i].weight = 0
+        else
+            job = jobs[nodes[arcs[i].sourceIndex].jobIndex]
+            task = filter(t ->Int(t.machineType) == nodes[arcs[i].sourceIndex].machineTypeIndex, job.tasks)
+            arcs[i].weight = task[1].withoutWorker
+        end
+        i+=1
+    end
+    return g, nodes, arcs
 end
 
 function createNetworkGraph(sources,destinations,weights)

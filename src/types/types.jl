@@ -120,8 +120,8 @@ end
 
 type OptimArc
     index::Integer
-    sourceNode::Integer
-    destinationNode::Integer
+    sourceIndex::Integer
+    targetIndex::Integer
     weight::Float
 
     OptimArc() = new(nullIndex,nullIndex,nullIndex,nullDist)
