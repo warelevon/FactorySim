@@ -5,7 +5,6 @@ global animPort = nullIndex # localhost port for animation, to be set
 
 
 function animSetIcons(client::WebSocket, sim::Simulation)
-	messageDict = JEMSS.createMessageDict("set_icons")
 	pngFileUrl(filename) = string("data:image/png;base64,", filename |> read |> base64encode)
 	iconPath = joinpath(@__DIR__, "..", "..", "assets", "animation", "icons")
 	icons = JSON.parsefile(joinpath(iconPath, "icons.json"))
@@ -14,15 +13,15 @@ function animSetIcons(client::WebSocket, sim::Simulation)
 		if name =="background"
 			bg = sim.background
 			map = sim.map
-			(bg.xMin,bg.xMax,bg.yMin,bg.yMax) = (map.xMin,map.xMax,map.yMin,map.yMax)
+			(bg.xMin,bg.xMax,bg.yMin,bg.yMax) = (map.xMin-0.15,map.xMax+0.15,map.yMin-0.15,map.yMax+0.15)
 
 			sim.background.imgUrl =  pngFileUrl(joinpath(iconPath, string(name, ".png")))
-			Main.Juno.render(bg)
 			animSetBackground(client, sim)
 		else
 			icon["options"]["iconUrl"] = pngFileUrl(joinpath(iconPath, string(name, ".png")))
 		end
 	end
+	messageDict = JEMSS.createMessageDict("set_icons")
 	merge!(messageDict, icons)
 	write(client, json(messageDict))
 end

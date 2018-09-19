@@ -101,8 +101,8 @@
 
 		var map = L.map('map_id', 'mapbox.streets', {
 			scrollWheelZoom: false,
-			maxZoom: 18,
-			minZoom: 1,
+			maxZoom: 14,
+			minZoom: 12,
 			crs: L.CRS.Simple
 		}).setView([0, 0], 12);
 
@@ -494,12 +494,17 @@
 
 		////////////////////////////////////////////////////////////////
 		// background
-		function setBackground(lat2, lon1, lat1, lon2, imgUrl) {
+		var background
+
+		function setBackground(lat1, lon1, lat2, lon2, imgUrl) {
 			imageBounds = [[lat1,lon1],[lat2,lon2]]
 			imageUrl = imgUrl
-			imageUrl = 'https://github.com/warelevon/FactorySim/blob/master/assets/animation/icons/background.png'
-			image = L.imageOverlay(imageUrl,imageBounds).addTo(map)
-			return image
+			// imageUrl = 'https://github.com/warelevon/FactorySim/blob/master/assets/animation/icons/background.png'
+			image = overlay(imageUrl,imageBounds)
+		}
+
+		function overlay(imageUrl,imageBounds) {
+			return L.imageOverlay(imageUrl,imageBounds).addTo(map)
 		}
 		////////////////////////////////////////////////////////////////
 		// jobs
