@@ -275,6 +275,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 					addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = job.machineProcessFinish, workerIndex = event.workerIndex, jobIndex = bJob.index,machineIndex=machine.index, task = bJob.tasks[bJob.taskIndex])
 					machine.batchedJobIndeces = Set()
 				end
+				addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+sim.setupTimesDict[machine.machineType]), workerIndex = event.workerIndex)
 			else
 				job.status = jobBatched
 				machine.isBusy = false
