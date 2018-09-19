@@ -8,11 +8,14 @@ type FactoryTask
 
     withWorker::Float
     withoutWorker::Float
+
+    machineProcessStart::Float
+    machineProcessFinish::Float
     isComplete::Bool
 
     machineIndex::Integer
 
-    FactoryTask() = new(nullIndex,nullIndex,nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex)
+    FactoryTask() = new(nullIndex,nullIndex,nullIndex,nullIndex,nullMachineType, nullTime,nullTime, nullTime,nullTime,false,nullIndex)
 end
 
 type Job
@@ -28,8 +31,6 @@ type Job
     dueTime::Float
 
     status::JobStatus
-    machineProcessStart::Float
-    machineProcessFinish::Float
     finished::Bool
 
     # for animation:
@@ -37,8 +38,8 @@ type Job
 	movedLoc::Bool
 
 
-    Job() = new(nullIndex,nullIndex,nullIndex,[], nullIndex,nullDist, nullTime,nullTime, nullJobStatus,nullTime,nullTime,false, Location(),false)
-    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float, location::Location) = new(index,1,nullIndex,deepcopy(tasks), nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,nullTime,nullTime,false, deepcopy(location),false)
+    Job() = new(nullIndex,nullIndex,nullIndex,[], nullIndex,nullDist, nullTime,nullTime, nullJobStatus,false, Location(),false)
+    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float, location::Location) = new(index,1,nullIndex,deepcopy(tasks), nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,false, deepcopy(location),false)
 
 end
 

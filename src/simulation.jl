@@ -243,14 +243,14 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		worker.status = workerProcessingJob
 
 		if !sim.batchingDict[machine.machineType]
-			job.machineProcessStart = sim.time
-			job.machineProcessFinish = sim.time+task.withoutWorker
+			task.machineProcessStart = sim.time
+			task.machineProcessFinish = sim.time+task.withoutWorker
 			# update worker and job status
 			job.status = jobAtMachine
 			# release worker when no longer needed. Finish task when process is finished
 			if task.withWorker != task.withoutWorker
 				addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+task.withWorker), workerIndex = event.workerIndex)
-				addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = job.machineProcessFinish, workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex=event.machineIndex, task = event.task)
+				addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = task.machineProcessFinish, workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex=event.machineIndex, task = event.task)
 			else
 				addEvent!(sim.eventList; parentEvent = event, eventType = finishAndRelease, time = (sim.time+task.withoutWorker), workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex=event.machineIndex, task = event.task)
 			end
@@ -265,8 +265,9 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 				end
 				for i in machine.batchedJobIndeces
 					bJob = sim.jobs[i]
-					bJob.machineProcessStart = sim.time
-					bJob.machineProcessFinish = sim.time + processTime
+					bTask = bJob.tasks[bJob.taskIndex]
+					bTask.machineProcessStart = sim.time
+					bTask.machineProcessFinish = sim.time + processTime
 					bJob.status = jobAtMachine
 				end
 				addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+sim.setupTimesDict[machine.machineType]), workerIndex = event.workerIndex)
@@ -295,8 +296,6 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		machine = sim.machines[event.machineIndex]
 		job.workerIndex=nullIndex
 		job.status = jobProcessed
-		job.machineProcessStart=nullTime
-		job.machineProcessFinish=nullTime
 		job.currentLoc = deepcopy(machine.outputLocation)
 		task=event.task
 
@@ -331,8 +330,6 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		machine = sim.machines[event.machineIndex]
 		job.workerIndex=nullIndex
 		job.status = jobProcessed
-		job.machineProcessStart=nullTime
-		job.machineProcessFinish=nullTime
 		job.currentLoc = deepcopy(machine.outputLocation)
 		task=event.task
 
@@ -363,8 +360,6 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			bJob = sim.jobs[i]
 			bJob.workerIndex=nullIndex
 			bJob.status = jobProcessed
-			bJob.machineProcessStart=nullTime
-			bJob.machineProcessFinish=nullTime
 			bJob.currentLoc = deepcopy(machine.outputLocation)
 
 
