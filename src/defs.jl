@@ -27,4 +27,4 @@ const nullDist = -1.0
 
 @enum WorkerStatus nullWorkerStatus workerIdle workerMovingToJob workerAtJob workerMovingToMachine workerProcessingJob
 
-@enum JobStatus nullJobStatus jobQueued jobWaitingForWorker jobGoingToMachine jobAtMachine jobProcessed
+@enum JobStatus nullJobStatus jobQueued jobWaitingForWorker jobGoingToMachine jobAtMachine jobProcessed jobBatched

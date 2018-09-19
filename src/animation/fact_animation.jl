@@ -71,7 +71,7 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 	for worker in workers
 		workerLocation = JEMSS.getRouteCurrentLocation!(sim.net, worker.route, time)
 		if !JEMSS.isSameLocation(workerLocation, worker.currentLoc)
-			worker.currentLoc = workerLocation
+			worker.currentLoc = deepcopy(workerLocation)
 			worker.movedLoc = true
 			# move ambulance
 			messageDict["worker"] = worker
@@ -119,8 +119,7 @@ function updateJobLocation!(sim::Simulation, job::Job)
 		worker = sim.workers[job.workerIndex]
 		job.movedLoc = worker.movedLoc
 		if worker.movedLoc
-			job.currentLoc.x =worker.currentLoc.x
-			job.currentLoc.y =worker.currentLoc.y
+			job.currentLoc = deepcopy(worker.currentLoc)
 		end
 	elseif job.status == jobAtMachine
 		task = job.tasks[job.taskIndex]
@@ -128,7 +127,7 @@ function updateJobLocation!(sim::Simulation, job::Job)
 		oLoc = deepcopy(machine.outputLocation)
 		iLoc = deepcopy(machine.inputLocation)
 		jobProg = sim.time - job.machineProcessStart
-		jobTotal = task.withoutWorker
+		jobTotal = job.machineProcessFinish - job.machineProcessStart
 		jobPerc = jobProg/jobTotal
 		job.currentLoc.x = iLoc.x + (jobPerc * (oLoc.x-iLoc.x))
 		job.currentLoc.y = iLoc.y + (jobPerc * (oLoc.y-iLoc.y))

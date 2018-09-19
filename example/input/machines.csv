@@ -1,9 +1,9 @@
 miscData,4,,
-machineType,isBatched,setupTimes,
-1,false,0
-2,false,0
-3,false,0
-4,false,0
+machineType,isBatched,setupTimes,maxBatchSize
+1,true,30,5
+2,false,0,0
+3,false,0,0
+4,false,0,0
 ,
 machines,4,,
 index,machineType,ilocx,ilocy,locx,locy,olocx,olocy,

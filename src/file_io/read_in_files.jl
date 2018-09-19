@@ -109,9 +109,11 @@ function readMachinesFile(filename::String)
     c = table.columns
     batchingDict = Dict{MachineType,Bool}()
     setupDict = Dict{MachineType,Float}()
+    maxBatchDict = Dict{MachineType,Integer}()
     for i = 1:m
         batchingDict[MachineType(i)] = Bool(c["isBatched"][i])
-        setupDict[MachineType(i)] = Bool(c["setupTimes"][i])
+        setupDict[MachineType(i)] = c["setupTimes"][i]/60/24
+        maxBatchDict[MachineType(i)] = c["maxBatchSize"][i]
     end
 
     table = tables["machines"]
@@ -129,7 +131,7 @@ function readMachinesFile(filename::String)
         machines[i].inputLocation = Location(c["ilocx"][i],c["ilocy"][i]) #set x and y location from row i
         machines[i].outputLocation = Location(c["olocx"][i],c["olocy"][i]) #set x and y location from row i
     end
-    return machines, batchingDict, setupDict
+    return machines, batchingDict, setupDict, maxBatchDict
 end
 
 function readProductDictFile(filename::String)
