@@ -118,6 +118,16 @@ type OptimNode
     OptimNode() = new(nullIndex,nullIndex,nullIndex)
 end
 
+type SubSchedule
+    jobIndex::Integer
+    releaseTime::Float
+    processingTime::Float
+    dueTime::Float
+    shiftedDueTime::Float
+
+    SubSchedule() = new(nullIndex,nullTime,nullTime,nullTime,nullTime)
+end
+
 type OptimArc
     index::Integer
     sourceIndex::Integer

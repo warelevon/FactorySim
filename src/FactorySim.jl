@@ -56,7 +56,7 @@ export
     EventType, nullEvent, taskReleased, checkAssign, assignClosestAvailableWorker, moveToJob, arriveAtJob, moveJobToMachine, startMachineProcess, releaseWorker, finishTask, finishAndRelease,
     WorkerStatus, nullWorkerStatus, workerIdle, workerMovingToJob, workerAtJob, workerMovingToMachine, workerProcessingJob,
     JobStatus, nullJobStatus, jobQueued, jobWaitingForWorker, jobGoingToMachine, jobAtMachine, jobProcessed,
-    startingLoc, OptimNode, OptimArc
+    startingLoc, OptimNode, OptimArc, SubSchedule
 
 
 include("defs.jl")

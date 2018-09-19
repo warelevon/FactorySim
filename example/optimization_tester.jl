@@ -22,6 +22,7 @@ weightsD4 = [6.,6.,4.,4.,4.,4.]
 nJobs = 3 # hard coded for now
 nNodes = maximum(destinationsC) #nodes
 n = 4 # machines
+dueDates = [40.,40.,30.]
 # create a vector with the index corresponding to a node and the values being a machine or job index
 toDo = transpose([1 2 4 0;1 2 3 4;1 2 3 4]) # hard coded matrix of a to do list for 3 jobs
 (x,y) = size(toDo)
@@ -55,7 +56,6 @@ for i = 2:nNodes-1
     optimNodes[i].machineTypeIndex = toDo1[i-1]
     optimNodes[i].jobIndex = jobNumber[i-1]
 end
-optimNodes
 
 # Create an optimArcType
 numArcs = length(weightsC)
@@ -96,20 +96,31 @@ end
 @assert isinteger(a) && a>=0
 
 # Find the distances from the source node to all other nodes in graph
-r = dijkstra_shortest_paths(gc,-eweights1,1)
+path = dijkstra_shortest_paths(gc,-eweights1,1)
 #iterate through machines in the set m-m0
 for i=1:length(m)-length(m0)
     mDash = filter!(m->m≠a,m) #removes the machine m0
     miNodes = filter(n -> n.machineTypeIndex==1,optimNodes) #get the node index of machine 1 operations
+    subSchedule = Vector{SubSchedule}(length(miNodes))
     # generate the 1|rj|Lmax schedule for each machine in mDash
     #cols - mDash[i]
     #rows rj; pij; dj
     for j=1:length(miNodes)
-        r = zeros(length(miNodes))
-        r[j] = r.dists[miNodes[j]] #releaseTime of job j at machine i
-        #miWeight = filter(n -> n.sourceNode==j,optimArcs)[1]
-        p[j] = filter(n -> n.sourceNode==j,optimArcs)[1] #processing time of  job j at machine i
+        subSchedule[j] = SubSchedule()
+        subSchedule[j].jobIndex = miNodes[j].jobIndex # node index
+        subSchedule[j].releaseTime = path.dists[miNodes[j].index] # releaseTime (rj) of job j at machine i
+        miWeight = filter(n -> n.sourceNode==j+1,optimArcs)
+        subSchedule[j].processingTime = -miWeight[1].weight #processing time of  job j at machine i
+        subSchedule[j].dueTime = dueDates[miNodes[j].jobIndex]
+        #shifted time origin
+        subSchedule[j].shiftedDueTime = subSchedule[j].dueTime - subSchedule[j].releaseTime
     end
+    # apply earliest due date rule to shited due time
+    sortedSubSchedule =  sort(subSchedule, by= t -> t.shiftedDueTime)
+    schedule = (sortedSubSchedule .|> [s -> s.jobIndex])
+    processingTimes = (sortedSubSchedule .|> [p -> p.processingTimes])
+    @show processingTimes
 end
+
 
 ####### STEP 3:
