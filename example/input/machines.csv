@@ -1,3 +1,10 @@
+miscData,4,,
+machineType,isBatched,setupTimes,
+1,false,0
+2,false,0
+3,false,0
+4,false,0
+,
 machines,4,,
 index,machineType,ilocx,ilocy,locx,locy,olocx,olocy,
 1,1,0.087,0.127,0.075,0.15,0.087,0.18

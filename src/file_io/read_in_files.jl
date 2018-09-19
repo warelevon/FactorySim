@@ -103,6 +103,17 @@ end
 
 function readMachinesFile(filename::String)
     tables = readTablesFromFile(filename)
+    table = tables["miscData"]
+    m = size(table.data,1) # number of orders
+	assert(m >= 1)
+    c = table.columns
+    batchingDict = Dict{MachineType,Bool}()
+    setupDict = Dict{MachineType,Float}()
+    for i = 1:m
+        batchingDict[MachineType(i)] = Bool(c["isBatched"][i])
+        setupDict[MachineType(i)] = Bool(c["setupTimes"][i])
+    end
+
     table = tables["machines"]
     n = size(table.data,1) # number of orders
 	assert(n >= 1)
@@ -118,7 +129,7 @@ function readMachinesFile(filename::String)
         machines[i].inputLocation = Location(c["ilocx"][i],c["ilocy"][i]) #set x and y location from row i
         machines[i].outputLocation = Location(c["olocx"][i],c["olocy"][i]) #set x and y location from row i
     end
-    return machines
+    return machines, batchingDict, setupDict
 end
 
 function readProductDictFile(filename::String)

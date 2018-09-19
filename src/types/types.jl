@@ -30,7 +30,8 @@ type Job
     dueTime::Float
 
     status::JobStatus
-    machineArrivalTime::Float
+    machineProcessStart::Float
+    batched::Bool
     finished::Bool
 
     # for animation:
@@ -38,8 +39,8 @@ type Job
 	movedLoc::Bool
 
 
-    Job() = new(nullIndex,nullIndex,nullIndex,[], nullIndex,nullDist, nullTime,nullTime, nullJobStatus,nullTime,false, Location(),false)
-    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float, location::Location) = new(index,1,nullIndex,deepcopy(tasks), nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,nullTime,false, deepcopy(location),false)
+    Job() = new(nullIndex,nullIndex,nullIndex,[], nullIndex,nullDist, nullTime,nullTime, nullJobStatus,nullTime,false,false, Location(),false)
+    Job(index::Integer,tasks::Vector{FactoryTask},releaseTime::Float,dueTime::Float, location::Location) = new(index,1,nullIndex,deepcopy(tasks), nullIndex,nullDist, releaseTime,dueTime, nullJobStatus,nullTime,false,false, deepcopy(location),false)
 
 end
 
@@ -153,6 +154,9 @@ type Simulation
 	workerFree::Bool
     tested::Bool
 
+    batchingDict::Dict{MachineType,Bool}
+    setupTimes::Dict{MachineType,Float}
+
     # Bugfixing
     numCompletedTasks::Integer
     numCompletedJobs::Integer
@@ -186,6 +190,7 @@ type Simulation
 	Simulation() = new(nullTime, nullTime, nullTime,
 		Network(), Travel(), Map(), Grid(),nullIndex,Location(),
 		[],Dict(),[], [], [], [], false, false,
+        Dict(),Dict(),
         0,0,
 		[], 0, [],
         Resimulation(),

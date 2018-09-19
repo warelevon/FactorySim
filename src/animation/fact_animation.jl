@@ -127,7 +127,7 @@ function updateJobLocation!(sim::Simulation, job::Job)
 		machine = sim.machines[task.machineIndex]
 		oLoc = deepcopy(machine.outputLocation)
 		iLoc = deepcopy(machine.inputLocation)
-		jobProg = sim.time - job.machineArrivalTime
+		jobProg = sim.time - job.machineProcessStart
 		jobTotal = task.withoutWorker
 		jobPerc = jobProg/jobTotal
 		job.currentLoc.x = iLoc.x + (jobPerc * (oLoc.x-iLoc.x))

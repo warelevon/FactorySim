@@ -137,7 +137,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# get next task in queued tasks and assign the closest worker to that task
 		possibleQueued = filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList)
 		if !isempty(possibleQueued)
-			event.task = shift!(possibleQueued)
+			event.task = pop!(possibleQueued)
 			task = event.task
 			# remove task frome queue
 			filter!(t -> t ≠ task, sim.queuedTaskList)
@@ -222,16 +222,29 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 	elseif eventType == startMachineProcess
 		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
-		job = sim.jobs[event.task.jobIndex]
-		job.currentLoc = deepcopy(sim.machines[event.machineIndex].inputLocation)
-		job.machineArrivalTime = event.time
-		# update worker and job status
-		sim.workers[event.workerIndex].status = workerProcessingJob
-		sim.jobs[event.jobIndex].status = jobAtMachine
-		# release worker when no longer needed. Finish task when process is finished
-		addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+event.task.withWorker), workerIndex = event.workerIndex)
-		addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = (sim.time+event.task.withoutWorker), workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex=event.machineIndex, task = event.task)
 
+		task = event.task
+		machine = sim.machines[event.machineIndex]
+		job = sim.jobs[event.task.jobIndex]
+		worker = sim.workers[event.workerIndex]
+		job.currentLoc = deepcopy(machine.inputLocation)
+
+		if !sim.batchingDict[machine.machineType]
+			job.machineProcessStart = event.time
+			# update worker and job status
+			worker.status = workerProcessingJob
+			sim.jobs[event.jobIndex].status = jobAtMachine
+			# release worker when no longer needed. Finish task when process is finished
+			if task.withWorker != task.withoutWorker
+				addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+task.withWorker), workerIndex = event.workerIndex)
+				addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = (sim.time+task.withoutWorker), workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex=event.machineIndex, task = event.task)
+			else
+				addEvent!(sim.eventList; parentEvent = event, eventType = finishAndRelease, time = (sim.time+task.withoutWorker), workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex=event.machineIndex, task = event.task)
+			end
+		else
+			job.batched = true
+
+		end
 	elseif eventType == releaseWorker
 		# reset worker for further use
 		worker = sim.workers[event.workerIndex]
@@ -250,7 +263,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		machine = sim.machines[event.machineIndex]
 		job.workerIndex=nullIndex
 		job.status = jobProcessed
-		job.machineArrivalTime=nullTime
+		job.machineProcessStart=nullTime
 		job.currentLoc = deepcopy(machine.outputLocation)
 		task=event.task
 
@@ -268,11 +281,42 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			addEvent!(sim.eventList, job.tasks[job.taskIndex], event.time)
 		end
 
-		# remove task for animation
+		addEvent!(sim.eventList; parentEvent = event, eventType = checkAssign, time = sim.time)
+		##################################
 
+	elseif eventType == finishAndRelease
+		# reset worker for further use
+		worker = sim.workers[event.workerIndex]
+		worker.status = workerIdle
+		worker.jobIndex = nullIndex
+		worker.currentTask=FactoryTask()
+
+		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
+		job = sim.jobs[event.jobIndex]
+		machine = sim.machines[event.machineIndex]
+		job.workerIndex=nullIndex
+		job.status = jobProcessed
+		job.machineProcessStart=nullTime
+		job.currentLoc = deepcopy(machine.outputLocation)
+		task=event.task
+
+		task.isComplete = true
+		machine.isBusy = false
+
+		sim.numCompletedTasks+=1
+		# if no more tasks, complete job, else add next task to queue
+		job.taskIndex +=1
+		if job.taskIndex>length(job.tasks)
+			job.finished = true
+			sim.numCompletedJobs+=1
+			delete!(sim.currentJobs, job)
+		else
+			addEvent!(sim.eventList, job.tasks[job.taskIndex], event.time)
+		end
 
 		addEvent!(sim.eventList; parentEvent = event, eventType = checkAssign, time = sim.time)
 		##################################
+		
 	else
 		# unspecified event
 		error()
@@ -357,7 +401,7 @@ function initSimulation(configFilename::String;
 	sim.workers = readWorkersFile(simFilePath("workers"))
 	(sim.productOrders, sim.startTime, sim.workerStartingLocation) = readProductOrdersFile(simFilePath("productOrders"))
 	sim.time = sim.startTime
-	sim.machines = readMachinesFile(simFilePath("machines"))
+	(sim.machines, sim.batchingDict, sim.setupTimes) = readMachinesFile(simFilePath("machines"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.workerStartingLocation, sim.productOrders,sim.productDict)
 
