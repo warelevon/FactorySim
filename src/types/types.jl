@@ -9,12 +9,10 @@ type FactoryTask
     withWorker::Float
     withoutWorker::Float
     isComplete::Bool
-    workerIndex::Integer
-    workerArrived::Bool
 
     machineIndex::Integer
 
-    FactoryTask() = new(nullIndex,nullIndex,nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex,false,nullIndex)
+    FactoryTask() = new(nullIndex,nullIndex,nullIndex,nullIndex,nullMachineType,nullTime,nullTime,false,nullIndex)
 end
 
 type Job
@@ -105,9 +103,10 @@ type Machine
     nearestNodeIndex::Integer
     nearestNodeDist::Float
     batchedJobIndeces::Set{Integer}
+    processingBatch::Bool
     isBusy::Bool
 
-    Machine() = new(nullIndex,nullMachineType,Location(),Location(),Location(),nullIndex,nullDist,Set(),false)
+    Machine() = new(nullIndex,nullMachineType,Location(),Location(),Location(),nullIndex,nullDist,Set(),false,false)
 end
 
 type Background

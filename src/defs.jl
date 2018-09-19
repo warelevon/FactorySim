@@ -23,7 +23,7 @@ const nullDist = -1.0
 
 @enum ProductType nullProductType=0 chair=1 table=2
 
-@enum EventType nullEvent taskReleased checkAssign assignClosestAvailableWorker moveToJob arriveAtJob moveJobToMachine startMachineProcess releaseWorker finishTask finishAndRelease
+@enum EventType nullEvent taskReleased checkAssign assignClosestAvailableWorker moveToJob arriveAtJob moveJobToMachine startMachineProcess releaseWorker finishTask finishAndRelease finishBatch
 
 @enum WorkerStatus nullWorkerStatus workerIdle workerMovingToJob workerAtJob workerMovingToMachine workerProcessingJob
 

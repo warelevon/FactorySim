@@ -40,11 +40,11 @@ end
 
 function freeMachines(sim::Simulation,machineType::MachineType)
 	# returns all free machines of matching machine type
-	return filter(m -> (m.machineType == machineType && !m.isBusy),sim.machines)
+	return filter(m -> (m.machineType == machineType && !m.isBusy && !m.processingBatch),sim.machines)
 end
 
 function isFreeMachine(sim::Simulation,machineType::MachineType)
-	return !isempty(filter(m -> (m.machineType == machineType && !m.isBusy),sim.machines))
+	return !isempty(filter(m -> (m.machineType == machineType && !m.isBusy && !m.processingBatch),sim.machines))
 end
 
 ## Based off findNearestFreeAmbToCall function in JEMSS
@@ -171,13 +171,12 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			task.machineIndex = closestMachine.index
 			event.machineIndex = closestMachine.index
 
-			# assigns worker to task
-			assert(event.task.workerIndex==nullIndex)
-			event.task.workerIndex = worker.index
+			# assigns worker to job
+			assert(job.workerIndex==nullIndex)
+			job.workerIndex = worker.index
 			worker.currentTask = event.task
 			# move worker to job location
 			job.status = jobWaitingForWorker
-			job.workerIndex = worker.index
 			worker.status = workerMovingToJob
 			addEvent!(sim.eventList; parentEvent = event, eventType = moveToJob, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,machineIndex = event.machineIndex,task = event.task)
 
@@ -218,14 +217,10 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 	elseif eventType == moveJobToMachine
 		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
 
-		# set task to have workerArrived
-		assert(event.task.workerArrived == false)
-		event.task.workerArrived = true
-
-
 		# find closest machine and attach to task
 		job = sim.jobs[event.jobIndex]
 		job.status = jobGoingToMachine
+
 		worker = sim.workers[event.workerIndex]
 		worker.status = workerMovingToMachine
 		machine = sim.machines[event.machineIndex]
@@ -261,7 +256,8 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			end
 		else
 			push!(machine.batchedJobIndeces,job.index)
-			if batchCheckStart(sim, machine)
+			if (batchCheckStart(sim, machine) && !machine.processingBatch)
+				machine.processingBatch = true
 				processTime = sim.setupTimesDict[machine.machineType]
 				for i in machine.batchedJobIndeces
 					bJob = sim.jobs[i]
@@ -270,12 +266,11 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 				for i in machine.batchedJobIndeces
 					bJob = sim.jobs[i]
 					bJob.machineProcessStart = sim.time
-					job.machineProcessFinish = sim.time + processTime
+					bJob.machineProcessFinish = sim.time + processTime
 					bJob.status = jobAtMachine
-					addEvent!(sim.eventList; parentEvent = event, eventType = finishTask, time = job.machineProcessFinish, workerIndex = event.workerIndex, jobIndex = bJob.index,machineIndex=machine.index, task = bJob.tasks[bJob.taskIndex])
-					machine.batchedJobIndeces = Set()
 				end
 				addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+sim.setupTimesDict[machine.machineType]), workerIndex = event.workerIndex)
+				addEvent!(sim.eventList; parentEvent = event, eventType = finishBatch, time = sim.time + processTime, machineIndex=machine.index)
 			else
 				job.status = jobBatched
 				machine.isBusy = false
@@ -305,6 +300,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		job.currentLoc = deepcopy(machine.outputLocation)
 		task=event.task
 
+		assert(!task.isComplete)
 		task.isComplete = true
 		machine.isBusy = false
 
@@ -312,6 +308,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# if no more tasks, complete job, else add next task to queue
 		job.taskIndex +=1
 		if job.taskIndex>length(job.tasks)
+			assert(!job.finished)
 			job.finished = true
 			sim.numCompletedJobs+=1
 			delete!(sim.currentJobs, job)
@@ -339,6 +336,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		job.currentLoc = deepcopy(machine.outputLocation)
 		task=event.task
 
+		assert(!task.isComplete)
 		task.isComplete = true
 		machine.isBusy = false
 
@@ -346,6 +344,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# if no more tasks, complete job, else add next task to queue
 		job.taskIndex +=1
 		if job.taskIndex>length(job.tasks)
+			assert(!job.finished)
 			job.finished = true
 			sim.numCompletedJobs+=1
 			delete!(sim.currentJobs, job)
@@ -353,6 +352,40 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			addEvent!(sim.eventList, job.tasks[job.taskIndex], event.time)
 		end
 
+		addEvent!(sim.eventList; parentEvent = event, eventType = checkAssign, time = sim.time)
+		##################################
+
+	elseif eventType == finishBatch
+		# move worker and job to machine for processing if free machine, else free worker and add task back to queue
+		machine = sim.machines[event.machineIndex]
+		machine.processingBatch =false
+		for i in machine.batchedJobIndeces
+			bJob = sim.jobs[i]
+			bJob.workerIndex=nullIndex
+			bJob.status = jobProcessed
+			bJob.machineProcessStart=nullTime
+			bJob.machineProcessFinish=nullTime
+			bJob.currentLoc = deepcopy(machine.outputLocation)
+
+
+			task=bJob.tasks[bJob.taskIndex]
+			assert(!task.isComplete)
+			task.isComplete = true
+			sim.numCompletedTasks+=1
+
+			# if no more tasks, complete job, else add next task to queue
+			bJob.taskIndex +=1
+			if bJob.taskIndex>length(bJob.tasks)
+				assert(!bJob.finished)
+				bJob.finished = true
+				sim.numCompletedJobs+=1
+				delete!(sim.currentJobs, bJob)
+			else
+				addEvent!(sim.eventList, bJob.tasks[bJob.taskIndex], event.time)
+			end
+		end
+		machine.isBusy = false
+		machine.batchedJobIndeces = Set()
 		addEvent!(sim.eventList; parentEvent = event, eventType = checkAssign, time = sim.time)
 		##################################
 
