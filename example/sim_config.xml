@@ -21,6 +21,7 @@
 	</simFiles>
 
 	<sim>
+		<numMachines>4</numMachines>
 		<numOrders>20</numOrders>
 		<productOrderDistributions>
 			<!-- period is 1/10 days-->

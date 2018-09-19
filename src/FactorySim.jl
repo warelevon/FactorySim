@@ -23,7 +23,6 @@ using StatsFuns
 
 # misc
 using LightGraphs
-using SimpleWeightedGraphs
 using ArchGDAL # does not use precompile
 using Graphs
 using JLD
@@ -45,7 +44,11 @@ export # file_io functions
     readOrderListFile, readMachinesFile, readWorkersFile, openOutputFiles!, writeEventToFile!, closeOutputFiles!, readProductOrdersFile
 
 export
-    FactoryTask, Job, Schedule, ProductOrder, Worker, Machine, Event, Background, Resimulation, Simulation
+    FactoryTask, Job, Schedule, ProductOrder, Worker, Machine, Event, Resimulation, Simulation
+
+export shiftingBottleNeck
+
+export createNetworkGraph
 
 export
     MachineType, nullMachineType, workbench, robot,
@@ -68,7 +71,8 @@ include("animation/fact_animation.jl")
 
 include("gen_fact_sim_files.jl")
 include("JEMSSImport.jl")
+include("shifting_bottleneck.jl")
+include("create_graphs.jl")
 include("simulation.jl")
-
 
 end
