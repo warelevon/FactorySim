@@ -112,8 +112,8 @@ end
 
 type OptimNode
     index::Integer
-    i::Integer #machine index
-    j::Integer #job index
+    machineTypeIndex::Integer #machine index
+    jobIndex::Integer #job index
 
     OptimNode() = new(nullIndex,nullIndex,nullIndex)
 end
