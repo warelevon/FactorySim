@@ -1,5 +1,5 @@
 ## This is currently a testing script. The plan is to move functions to src files
-using JEMSS, FactorySim, Graphs
+using JEMSS, FactorySim, Distributions, Graphs
 
 # test graph inputs for conjunctive and disjunctive graphs
 sourcesC = [1,2,3,4,1,5,6,7,8,1,9,10,11,12]
@@ -18,64 +18,24 @@ sourcesD4 = [4,4,8,8,12,12]
 destinationsD4 = [8,12,4,12,4,8]
 weightsD4 = [6.,6.,4.,4.,4.,4.]
 
-# misc input
-nJobs = 3 # hard coded for now
-toDo = transpose([1 2 4 0;1 2 3 4;1 2 3 4]) # hard coded matrix of a to do list for 3 jobs
-(x,y) = size(toDo)
-jobNumber = zeros(y,x)
-for i = 1:y
-    jobNumber[i,:] = i
-end
-toDo = vec(reshape(toDo,1,length(toDo)))
-jobNumber = vec(reshape(jobNumber,1,length(jobNumber)))
+# Create a graph of the conjunctive arcs only
+gc = createNetworkGraph(sourcesC,destinationsC,weightsC)
 
-#remove the zero values
-r = find(toDo1 -> toDo1 == 0, toDo1)
-
-# remove the indices of any zero values in both arrays
-for i = 1:length(r)
-    deleteat!(r[i],toDo1)
-    deleteat!(r[i],jobNumber)
-
-
-toDo2 = filter!(toDo1->toDo1≠0,toDo1)
+######################### will go in shifting_bottleneck.jl function
+## STEP 0:
+# Set variables
 rootElt = xmlFileRoot("C:\\Users\\dd\\.julia\\v0.6\\FactorySim\\example\\sim_config.xml") #hard coded for now
 simElt = findElt(rootElt, "sim")
 n = parse(Int, eltContent(simElt, "numMachines"))
 m = collect(1:n)
-nNodes = sum(mJCR)
 
-# create OptimNode types to match the node index with the machine and job index
-optimNode = Vector{OptimNode}(nNodes)
-optimNode[1] = OptimNode()
-optimNode[1].index = 1
-optimNode[1].i = nullIndex
-optimNode[1].j = nullIndex
-optimNode[nNodes] = OptimNode()
-optimNode[nNodes].index = nNodes
-optimNode[nNodes].i = nullIndex
-optimNode[nNodes].j = nullIndex
-for i = 1:nNodes
-    optimNode[i] = OptimNode()
-    optimNode[i].index = i
-    optimNode[i].i = toDo[i]
-    optimNode[i].j =
-end
-optimNode
-
-
-
-# Create a graph of the conjunctive arcs only
-(gc, eweights1) = createNetworkGraph(sourcesC,destinationsC,weightsC)
-
-######################### will go in shifting_bottleneck.jl function
-#inputs gc, eweights1, nJpbs
 ####### STEP 1:
 # Set  M_0
 m0 = Int64[]
 # Find Cmax for the graph with only conjuctive arcs, no disjunctive arcs
 s1 = Graphs.bellman_ford_shortest_paths(gc, eweights1, [1])
 cMax = maximum(-s1.dists)
+length(m0)
 
 ####### STEP 2:
 # Used for the filter() function in step 2
@@ -85,19 +45,10 @@ else
     a = m0[1]
 end
 @assert isinteger(a) && a>=0
-
-dijkstra_shortest_paths(gc,-eweights1,1)
-
 #iterate through machines in the set m-m0
 for i=1:length(m)-length(m0)
-    mDash = filter!(m->m≠a,m) #removes the machine m0
-    # generate the 1|rj|Lmax schedule for each machine in mDash
-    #cols - mDash[i]
-    #rows rj; pij; dj
-    for j=1:nJobs
-        r = zeros(3)
-        r[j] =
-    end
-end
+    mDash = filter!(m->m≠a,m)
+    println("machines evaluated are: ",mDash)
 
+end
 ####### STEP 3:
