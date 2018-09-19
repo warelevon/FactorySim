@@ -1,11 +1,11 @@
 ## Turn ToDo lists, productDict and job numbers into sources, destinations and weights
+# would be good to get a Dict to match vertice/node index with machine and job index
 function createNetworkGraphInput()
 
     return
 end
 
-# a diGraph relating to a snapshot of the problem
-# and a Dict to match vertice/node index with machine and job index
+# create a directed Graph relating to a snapshot of the problem
 function createNetworkGraph(sources,destinations,weights)
     ne = length(sources)
     g = simple_inclist(ne)
@@ -14,5 +14,5 @@ function createNetworkGraph(sources,destinations,weights)
         Graphs.add_edge!(g, sources[i], destinations[i])
         eweights1[i] = weights[i]
     end
-    return g
+    return g, eweights1
 end

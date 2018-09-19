@@ -20,6 +20,8 @@ weightsD4 = [6.,6.,4.,4.,4.,4.]
 
 # misc input
 nJobs = 3 # hard coded for now
+
+# create a vector with the index corresponding to a node and the values being a machine or job index
 toDo = transpose([1 2 4 0;1 2 3 4;1 2 3 4]) # hard coded matrix of a to do list for 3 jobs
 (x,y) = size(toDo)
 jobNumber = zeros(y,x)
@@ -31,14 +33,11 @@ jobNumber = vec(reshape(jobNumber,1,length(jobNumber)))
 
 #remove the zero values
 r = find(toDo1 -> toDo1 == 0, toDo1)
-
 # remove the indices of any zero values in both arrays
 for i = 1:length(r)
-    deleteat!(r[i],toDo1)
-    deleteat!(r[i],jobNumber)
-
-
-toDo2 = filter!(toDo1->toDo1≠0,toDo1)
+    toDo1 = deleteat!(toDo1,r[i])
+    jobNumber = deleteat!(jobNumber,r[i])
+end
 rootElt = xmlFileRoot("C:\\Users\\dd\\.julia\\v0.6\\FactorySim\\example\\sim_config.xml") #hard coded for now
 simElt = findElt(rootElt, "sim")
 n = parse(Int, eltContent(simElt, "numMachines"))
@@ -55,11 +54,11 @@ optimNode[nNodes] = OptimNode()
 optimNode[nNodes].index = nNodes
 optimNode[nNodes].i = nullIndex
 optimNode[nNodes].j = nullIndex
-for i = 1:nNodes
+for i = 2:nNodes+1
     optimNode[i] = OptimNode()
     optimNode[i].index = i
-    optimNode[i].i = toDo[i]
-    optimNode[i].j =
+    optimNode[i].i = toDo1[i]
+    optimNode[i].j = jobNumber[i]
 end
 optimNode
 
