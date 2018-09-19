@@ -471,6 +471,7 @@ function initSimulation(configFilename::String;
 	(sim.machines, sim.batchingDict, sim.setupTimesDict, sim.maxBatchSizeDict) = readMachinesFile(simFilePath("machines"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.workerStartingLocation, sim.productOrders,sim.productDict)
+	optimgraph=createNetworkGraph(sim)
 
 	assert(all(j->j.releaseTime>=sim.startTime, sim.jobs))
 
