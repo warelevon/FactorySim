@@ -109,6 +109,14 @@ type Machine
     Machine() = new(nullIndex,nullMachineType,Location(),Location(),Location(),nullIndex,nullDist,Set(),false,false)
 end
 
+type OptimNode
+    index::Integer
+    i::Integer #machine index
+    j::Integer #job index
+
+    OptimNode() = new(nullIndex,nullIndex,nullIndex)
+end
+
 type Background
     xMin::Float
     yMin::Float
