@@ -23,7 +23,9 @@ using StatsFuns
 
 # misc
 using LightGraphs
+using SimpleWeightedGraphs
 using ArchGDAL # does not use precompile
+using Graphs
 using JLD
 import Plots
 
@@ -50,7 +52,8 @@ export
     ProductType, nullProductType, chair, table,
     EventType, nullEvent, taskReleased, checkAssign, assignClosestAvailableWorker, moveToJob, arriveAtJob, moveJobToMachine, startMachineProcess, releaseWorker, finishTask,
     WorkerStatus, nullWorkerStatus, workerIdle, workerMovingToJob, workerAtJob, workerMovingToMachine, workerProcessingJob,
-    JobStatus, nullJobStatus, jobQueued, jobWaitingForWorker, jobGoingToMachine, jobAtMachine, jobProcessed
+    JobStatus, nullJobStatus, jobQueued, jobWaitingForWorker, jobGoingToMachine, jobAtMachine, jobProcessed,
+    startingLoc
 
 
 include("defs.jl")
