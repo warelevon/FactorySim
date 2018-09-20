@@ -115,6 +115,14 @@ function batchCheckStart(sim::Simulation, machine::Machine)
 	return start
 end
 
+function batchProcessTime(sim::Simulation,machineType::MachineType,batchedJobIndeces::Vector{Integer})
+	processTime = sim.setupTimesDict[machineType]
+	for i in batchedJobIndeces
+		job = sim.jobs[i]
+		processTime += filter(t->t.machineType==machineType,job.tasks)[1].withoutWorker
+	end
+	return processTime
+end
 function simulateFactoryEvent!(sim::Simulation, event::Event)
 	# format:
 	# next event may change relevant ambulance / call fields at event.time
@@ -258,11 +266,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			push!(machine.batchedJobIndeces,job.index)
 			if (batchCheckStart(sim, machine) && !machine.processingBatch)
 				machine.processingBatch = true
-				processTime = sim.setupTimesDict[machine.machineType]
-				for i in machine.batchedJobIndeces
-					bJob = sim.jobs[i]
-					processTime += bJob.tasks[bJob.taskIndex].withoutWorker
-				end
+				processTime = batchProcessTime(sim,machine.machineType,collect(machine.batchedJobIndeces))
 				for i in machine.batchedJobIndeces
 					bJob = sim.jobs[i]
 					bTask = bJob.tasks[bJob.taskIndex]
@@ -471,8 +475,11 @@ function initSimulation(configFilename::String;
 	(sim.machines, sim.batchingDict, sim.setupTimesDict, sim.maxBatchSizeDict) = readMachinesFile(simFilePath("machines"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.workerStartingLocation, sim.productOrders,sim.productDict)
-	optimgraph=createNetworkGraph(sim)
-
+	(optimgraph, optimnodes, optimarcs, nodeLookup) =createNetworkGraph(sim.jobs)
+	println(optimarcs .|> a-> a.index)
+	sim.batchesDict = Dict{MachineType,Vector{Vector{Integer}}}()
+	sim.batchesDict[robot] = basicBatching(sim, optimnodes)
+	batchGraph!(optimgraph, optimarcs, robot, sim, nodeLookup)
 	assert(all(j->j.releaseTime>=sim.startTime, sim.jobs))
 
 	# read network data

@@ -206,6 +206,7 @@ type Simulation
     batchingDict::Dict{MachineType,Bool}
     setupTimesDict::Dict{MachineType,Float}
     maxBatchSizeDict::Dict{MachineType,Integer}
+    batchesDict::Dict{MachineType,Vector{Vector{Integer}}}
 
     # Bugfixing
     numCompletedTasks::Integer
@@ -240,7 +241,7 @@ type Simulation
 	Simulation() = new(nullTime, nullTime, nullTime,
 		Network(), Travel(), Map(), Grid(),nullIndex,Location(),
 		[],Dict(),[], [], [], [], false, false,
-        Dict(),Dict(),Dict(),
+        Dict(),Dict(),Dict(),Dict(),
         0,0,
 		[], 0, [],
         Resimulation(),

@@ -1,7 +1,6 @@
 ## Turn ToDo lists, productDict and job numbers into sources, destinations and weights
 # would be good to get a Dict to match vertice/node index with machine and job index
-function createNetworkGraph(sim)
-    jobs = sim.jobs
+function createNetworkGraph(jobs::Vector{Job})
     numNodes = 2
     numJobs = 0
     maxNumTasks = 0
@@ -70,7 +69,7 @@ function createNetworkGraph(sim)
     i=1
     for e in Graphs.edges(g)
         arcs[i] = OptimArc()
-        arcs[i].index = i
+        arcs[i].index = Graphs.edge_index(e,g)
         arcs[i].sourceIndex = Graphs.source(e,g)
         arcs[i].targetIndex = Graphs.target(e,g)
         if arcs[i].sourceIndex == 1
@@ -82,7 +81,39 @@ function createNetworkGraph(sim)
         end
         i+=1
     end
-    return g, nodes, arcs
+    return g, nodes, arcs, nodeLookup
+end
+
+function batchGraph!(g::Graphs.GenericGraph, arcs::Vector{OptimArc},machineType::MachineType,sim::Simulation, nodeLookup::Array{Integer})
+    batches = sim.batchesDict[machineType]
+    for b in batches
+        processTime = batchProcessTime(sim,machineType,b)
+        for j in b
+            v = Graphs.vertices(g)[nodeLookup[j,Integer(machineType)]]
+            for e in Graphs.out_edges(v,g)
+                arc = arcs[Graphs.edge_index(e,g)]
+                if arc.targetIndex in b
+                    arc.weight = 0
+                else
+                    arc.weight = processTime
+                end
+            end
+        end
+    end
+
+end
+
+function basicBatching(sim::Simulation, nodes::Vector{OptimNode})
+    mactype = robot
+    batches=Vector{Vector{Integer}}()
+    bnodes = filter(n->n.machineTypeIndex == Integer(mactype),nodes)
+    sort!(bnodes, by= n-> sim.jobs[n.jobIndex].dueTime)
+    jobIndeces = (bnodes.|> n->n.jobIndex)
+    maxb = sim.maxBatchSizeDict[mactype]
+    for i in 1:maxb:length(jobIndeces)
+        push!(batches,jobIndeces[i:min(i+maxb-1,length(jobIndeces))])
+    end
+    return batches
 end
 
 function createNetworkGraph(sources,destinations,weights)
