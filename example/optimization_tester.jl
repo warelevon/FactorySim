@@ -3,7 +3,7 @@ using JEMSS, FactorySim, Graphs
 
 # test graph inputs for conjunctive and disjunctive graphs
 sourcesC = [1,2,3,4,1,5,6,7,8,1,9,10,11,12]
-destinationsC = [2,3,4,13,5,6,7,8,13,9,10,11,12,13]
+targetsC = [2,3,4,13,5,6,7,8,13,9,10,11,12,13]
 weightsC = [0.,21.,10.,6.,0.,21.,10.,6.,4.,0.,21.,10.,6.,4.] # To create a solution related to our assumptions
 sourcesD1 = [2,2,5,5,9,9]
 destinationsD1 = [5,9,2,9,2,5]
@@ -20,7 +20,7 @@ weightsD4 = [6.,6.,4.,4.,4.,4.]
 
 # misc input
 nJobs = 3 # hard coded for now
-nNodes = maximum(destinationsC) #nodes
+nNodes = maximum(targetsC) #nodes
 n = 4 # machines
 dueDates = [40.,40.,30.]
 # create a vector with the index corresponding to a node and the values being a machine or job index
@@ -65,11 +65,11 @@ for i = 1:numArcs
     optimArcs[i].index = i
     optimArcs[i].weight = weightsC[i]
     optimArcs[i].sourceIndex = sourcesC[i]
-    optimArcs[i].targetIndex = destinationsC[i]
+    optimArcs[i].targetIndex = targetsC[i]
 end
 
 # Create a graph of the conjunctive arcs only
-(gc, eweights1) = createNetworkGraph(sourcesC,destinationsC,weightsC)
+(gc, eweights1) = createNetworkGraph(sourcesC,targetsC,weightsC)
 
 ######################### will go in shifting_bottleneck.jl function
 #inputs gc, eweights1, nJobs, simFilepath?
@@ -83,8 +83,9 @@ m = collect(1:n)
 # Set  M_0
 m0 = Int64[]
 # Find Cmax for the graph with only conjuctive arcs, no disjunctive arcs
-s1 = Graphs.bellman_ford_shortest_paths(gc, -eweights1, [1]) # negative weights
-cMax = maximum(-s1.dists)
+path = Graphs.bellman_ford_shortest_paths(gc, -eweights1, [1]) # negative weights
+path.dists = -path.dists # positive weights
+cMax = maximum(path.dists)
 maxL = zeros(length(m))
 addedScheduleNodeIndex = zeros(0)
 
@@ -97,10 +98,9 @@ else
 end
 @assert isinteger(a) && a>=0
 mDash = filter!(m->m≠a,m) #removes the set of scheduled machine(s), m0
-# Find the distances from the source node to all other nodes in graph
-path = dijkstra_shortest_paths(gc,-eweights1,1)
 #iterate through machines in the set m-m0
 pTime = zeros(length(mDash))
+lMax = zeros(length(mDash))
 subSchedules = Vector{Vector{SubSchedule}}(length(mDash))
 sortedSubSchedule = Vector{Integer}(length(mDash))
 for i = 1:length(mDash)
@@ -117,11 +117,12 @@ for i = 1:length(mDash)
         miWeight = filter(n -> n.sourceIndex==miNodesIndex[j],optimArcs)
         subMiWeight = (miWeight .|> [m -> m.weight])
         subSchedule[j].processingTime = subMiWeight[1] #processing time of  job j at machine i
-        subSchedule[j].dueTime = dueDates[miNodes[j].nodeIndex]
+        subSchedule[j].dueTime = dueDates[miNodes[j].jobIndex]
         #shifted time origin
         subSchedule[j].shiftedDueTime = subSchedule[j].dueTime - subSchedule[j].releaseTime
     end
     # solve the 1|rj|Lmax schedule for each machine in mDash
+
     sortedSubSchedule = sort(subSchedule, by= t -> t.shiftedDueTime)
     subSchedules[i] =  sortedSubSchedule
     # get the objective value and solution
@@ -129,11 +130,31 @@ for i = 1:length(mDash)
         pTime[i] += subSchedules[i][l].processingTime
     end
     lMax[i] = pTime[i] - subSchedules[i][end].dueTime
+    #@show lMax
 end
 
-subSchedules[1][1]
-(lMax,lMaxIndex) = findmax(lMax)
-machineTaskSchedule = subSchedules[i][end].dueTime
-
 ####### STEP 3:
-k = mDash[lMaxIndex] # machine index to be scheduled according to
+## Schedule the new bottleneck solution in the graph
+(lMax,lMaxIndex) = findmax(lMax)
+sourceNodesUpdate = zeros(0)
+targetNodesUpdate = zeros(0)
+weightsUpdate = zeros(0)
+# Create vectors to add to the graph through the add edge function
+numTasks = length(subSchedules[lMaxIndex])
+for i = 1:numTasks-1
+    append!(sourceNodesUpdate, subSchedules[lMaxIndex][i].nodeIndex)
+    append!(targetNodesUpdate, subSchedules[lMaxIndex][i+1].nodeIndex)
+    append!(weightsUpdate, 0.0)
+end
+assert(length(sourceNodesUpdate)==length(targetNodesUpdate)==length(weightsUpdate))
+sourceNodesUpdate
+targetNodesUpdate
+weightsUpdate
+# Add the vectors to a graph
+
+append!(sourcesC,sourceNodesUpdate)
+append!(targetsC,targetNodesUpdate)
+append!(weightsC,weightsUpdate)
+typeof(weightsC)
+
+gNew = createNetworkGraph(sourcesC,targetsC,weightsC)
