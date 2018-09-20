@@ -104,16 +104,20 @@ function batchGraph!(g::Graphs.GenericGraph, arcs::Vector{OptimArc},machineType:
 end
 
 function basicBatching(sim::Simulation, nodes::Vector{OptimNode})
-    mactype = robot
-    batches=Vector{Vector{Integer}}()
-    bnodes = filter(n->n.machineTypeIndex == Integer(mactype),nodes)
-    sort!(bnodes, by= n-> sim.jobs[n.jobIndex].dueTime)
-    jobIndeces = (bnodes.|> n->n.jobIndex)
-    maxb = sim.maxBatchSizeDict[mactype]
-    for i in 1:maxb:length(jobIndeces)
-        push!(batches,jobIndeces[i:min(i+maxb-1,length(jobIndeces))])
+    batchesDict = Dict{MachineType,Vector{Vector{Integer}}}()
+    for mactype in filter(m->sim.batchingDict[m],instances(MachineType))
+        machines = filter(m->m.machineType==mactype, sim.machines)
+        batches=Vector{Vector{Integer}}()
+        bnodes = filter(n->n.machineTypeIndex == Integer(mactype),nodes)
+        sort!(bnodes, by= n-> sim.jobs[n.jobIndex].dueTime)
+        jobIndeces = (bnodes.|> n->n.jobIndex)
+        maxb = sim.maxBatchSizeDict[mactype]
+        for i in 1:maxb:length(jobIndeces)
+            push!(batches,copy(jobIndeces[i:min(i+maxb-1,length(jobIndeces))]))
+        end
+        batchesDict[mactype] = deepcopy(batches)
     end
-    return batches
+    return batchesDict
 end
 
 function createNetworkGraph(sources,destinations,weights)

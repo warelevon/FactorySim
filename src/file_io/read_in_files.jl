@@ -108,8 +108,11 @@ function readMachinesFile(filename::String)
 	assert(m >= 1)
     c = table.columns
     batchingDict = Dict{MachineType,Bool}()
+    batchingDict[nullMachineType] = false
     setupDict = Dict{MachineType,Float}()
+    setupDict[nullMachineType] = nullTime
     maxBatchDict = Dict{MachineType,Integer}()
+    maxBatchDict[nullMachineType] = nullIndex
     for i = 1:m
         batchingDict[MachineType(i)] = Bool(c["isBatched"][i])
         setupDict[MachineType(i)] = c["setupTimes"][i]/60/24

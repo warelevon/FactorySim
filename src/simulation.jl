@@ -477,8 +477,7 @@ function initSimulation(configFilename::String;
 	sim.jobs = decomposeOrder(sim.workerStartingLocation, sim.productOrders,sim.productDict)
 	(optimgraph, optimnodes, optimarcs, nodeLookup) =createNetworkGraph(sim.jobs)
 	println(optimarcs .|> a-> a.index)
-	sim.batchesDict = Dict{MachineType,Vector{Vector{Integer}}}()
-	sim.batchesDict[robot] = basicBatching(sim, optimnodes)
+	sim.batchesDict = basicBatching(sim, optimnodes)
 	batchGraph!(optimgraph, optimarcs, robot, sim, nodeLookup)
 	assert(all(j->j.releaseTime>=sim.startTime, sim.jobs))
 
