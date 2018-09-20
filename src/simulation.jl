@@ -152,7 +152,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 	elseif eventType == assignClosestAvailableWorker
 		# get next task in queued tasks and assign the closest worker to that task
-		possibleQueued = filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList)
+		possibleQueued = sort(filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList),by=t->sim.jobs[t.jobIndex].dueTime)
 		if !isempty(possibleQueued)
 			event.task = shift!(possibleQueued)
 			task = event.task
