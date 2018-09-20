@@ -120,13 +120,34 @@ end
 
 type SubSchedule
     jobIndex::Integer
+    machineIndex::Integer
+    nodeIndex::Integer
     releaseTime::Float
     processingTime::Float
     dueTime::Float
     shiftedDueTime::Float
 
-    SubSchedule() = new(nullIndex,nullTime,nullTime,nullTime,nullTime)
+    SubSchedule() = new(nullIndex,nullIndex,nullIndex,nullTime,nullTime,nullTime,nullTime)
 end
+#
+#type OptimTask
+# machineIndex::Integer
+# jobIndex::Integer
+# nodeIndex::Integer
+# releaseTime::Float
+# processingTime::Float
+# dueTime::Float
+# shiftedDueTime::Float
+#
+# OptimJob() = new(nullIndex, nullIndex,nullIndex,nullTime,nullTime,nullTime,nullTime)
+#
+#
+#e OptimSubSchedule
+# jobSequence::Vector{OptimTask}
+# objVal::Float
+#
+# OptimSchedule = new(Vector{OptimTask}(), nullDist)
+#
 
 type OptimArc
     index::Integer

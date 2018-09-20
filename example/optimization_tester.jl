@@ -4,7 +4,7 @@ using JEMSS, FactorySim, Graphs
 # test graph inputs for conjunctive and disjunctive graphs
 sourcesC = [1,2,3,4,1,5,6,7,8,1,9,10,11,12]
 destinationsC = [2,3,4,13,5,6,7,8,13,9,10,11,12,13]
-weightsC = -[0.,21.,10.,6.,0.,21.,10.,6.,4.,0.,21.,10.,6.,4.] # To create a solution related to our assumptions
+weightsC = [0.,21.,10.,6.,0.,21.,10.,6.,4.,0.,21.,10.,6.,4.] # To create a solution related to our assumptions
 sourcesD1 = [2,2,5,5,9,9]
 destinationsD1 = [5,9,2,9,2,5]
 weightsD1 = [0.,0.,0.,0.,0.,0.]
@@ -64,8 +64,8 @@ for i = 1:numArcs
     optimArcs[i] = OptimArc()
     optimArcs[i].index = i
     optimArcs[i].weight = weightsC[i]
-    optimArcs[i].sourceNode = sourcesC[i]
-    optimArcs[i].destinationNode = destinationsC[i]
+    optimArcs[i].sourceIndex = sourcesC[i]
+    optimArcs[i].targetIndex = destinationsC[i]
 end
 
 # Create a graph of the conjunctive arcs only
@@ -83,8 +83,10 @@ m = collect(1:n)
 # Set  M_0
 m0 = Int64[]
 # Find Cmax for the graph with only conjuctive arcs, no disjunctive arcs
-s1 = Graphs.bellman_ford_shortest_paths(gc, eweights1, [1])
+s1 = Graphs.bellman_ford_shortest_paths(gc, -eweights1, [1]) # negative weights
 cMax = maximum(-s1.dists)
+maxL = zeros(length(m))
+addedScheduleNodeIndex = zeros(0)
 
 ####### STEP 2:
 # Used for the filter() function in step 2
@@ -94,33 +96,44 @@ else
     a = m0[1]
 end
 @assert isinteger(a) && a>=0
-
+mDash = filter!(m->m≠a,m) #removes the set of scheduled machine(s), m0
 # Find the distances from the source node to all other nodes in graph
 path = dijkstra_shortest_paths(gc,-eweights1,1)
 #iterate through machines in the set m-m0
-for i=1:length(m)-length(m0)
-    mDash = filter!(m->m≠a,m) #removes the machine m0
-    miNodes = filter(n -> n.machineTypeIndex==1,optimNodes) #get the node index of machine 1 operations
-    subSchedule = Vector{SubSchedule}(length(miNodes))
+pTime = zeros(length(mDash))
+subSchedules = Vector{Vector{SubSchedule}}(length(mDash))
+sortedSubSchedule = Vector{Integer}(length(mDash))
+for i = 1:length(mDash)
+    miNodes = filter(n -> n.machineTypeIndex==mDash[i],optimNodes) #get the node index of machine 1 operations
+    miNodesIndex = (miNodes .|> [d -> d.index]) # node index at machine i
+    subSchedules[i] = Vector{SubSchedule}(length(miNodes))
+    subSchedule = subSchedules[i]
     # generate the 1|rj|Lmax schedule for each machine in mDash
-    #cols - mDash[i]
-    #rows rj; pij; dj
     for j=1:length(miNodes)
         subSchedule[j] = SubSchedule()
-        subSchedule[j].jobIndex = miNodes[j].jobIndex # node index
-        subSchedule[j].releaseTime = path.dists[miNodes[j].index] # releaseTime (rj) of job j at machine i
-        miWeight = filter(n -> n.sourceNode==j+1,optimArcs)
-        subSchedule[j].processingTime = -miWeight[1].weight #processing time of  job j at machine i
-        subSchedule[j].dueTime = dueDates[miNodes[j].jobIndex]
+        subSchedule[j].nodeIndex = miNodesIndex[j] # node index
+        subSchedule[j].nodeIndex = miNodesIndex[j] # node index
+        subSchedule[j].releaseTime = path.dists[miNodesIndex[j]] # releaseTime (rj) of job j at machine i
+        miWeight = filter(n -> n.sourceIndex==miNodesIndex[j],optimArcs)
+        subMiWeight = (miWeight .|> [m -> m.weight])
+        subSchedule[j].processingTime = subMiWeight[1] #processing time of  job j at machine i
+        subSchedule[j].dueTime = dueDates[miNodes[j].nodeIndex]
         #shifted time origin
         subSchedule[j].shiftedDueTime = subSchedule[j].dueTime - subSchedule[j].releaseTime
     end
-    # apply earliest due date rule to shited due time
-    sortedSubSchedule =  sort(subSchedule, by= t -> t.shiftedDueTime)
-    schedule = (sortedSubSchedule .|> [s -> s.jobIndex])
-    processingTimes = (sortedSubSchedule .|> [p -> p.processingTimes])
-    @show processingTimes
+    # solve the 1|rj|Lmax schedule for each machine in mDash
+    sortedSubSchedule = sort(subSchedule, by= t -> t.shiftedDueTime)
+    subSchedules[i] =  sortedSubSchedule
+    # get the objective value and solution
+    for l = 1:length(miNodes)
+        pTime[i] += subSchedules[i][l].processingTime
+    end
+    lMax[i] = pTime[i] - subSchedules[i][end].dueTime
 end
 
+subSchedules[1][1]
+(lMax,lMaxIndex) = findmax(lMax)
+machineTaskSchedule = subSchedules[i][end].dueTime
 
 ####### STEP 3:
+k = mDash[lMaxIndex] # machine index to be scheduled according to
