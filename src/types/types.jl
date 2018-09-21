@@ -82,6 +82,8 @@ type Worker
     index::Integer
     jobIndex::Integer
     status::WorkerStatus
+    timeBusy::Float
+    taskStartTime::Float
 
     # for animation:
     currentLoc::Location
@@ -91,7 +93,7 @@ type Worker
 
     currentTask::FactoryTask
 
-    Worker() = new(nullIndex,nullIndex,nullWorkerStatus,Location(),false,Route(),FactoryTask())
+    Worker() = new(nullTime,nullIndex,nullWorkerStatus,0.,0.,Location(),false,Route(),FactoryTask())
 
 end
 

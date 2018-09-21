@@ -253,6 +253,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 	elseif eventType == arriveAtJob
 		# process worker arriving at job. If machine is free continue, else free worker and add task back to queue (this should rarely happen if at all)
 		sim.workers[event.workerIndex].status = workerAtJob
+		sim.workers[event.workerIndex].taskStartTime = sim.time
 		addEvent!(sim.eventList; parentEvent = event, eventType = moveJobToMachine, time = sim.time, workerIndex = event.workerIndex,jobIndex = event.jobIndex,machineIndex = event.machineIndex,task = event.task)
 		##################################
 
@@ -265,6 +266,8 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 		worker = sim.workers[event.workerIndex]
 		worker.status = workerMovingToMachine
+		worker.timeBusy += sim.time - worker.taskStartTime
+		worker.taskStartTime = sim.time
 		machine = sim.machines[event.machineIndex]
 
 		#move worker and job to machine
@@ -283,6 +286,8 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		worker = sim.workers[event.workerIndex]
 		job.currentLoc = deepcopy(machine.inputLocation)
 		worker.status = workerProcessingJob
+		worker.timeBusy += sim.time - worker.taskStartTime
+		worker.taskStartTime = sim.time
 
 		if !sim.batchingDict[machine.machineType]
 			task.machineProcessStart = sim.time
@@ -319,6 +324,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# reset worker for further use
 		worker = sim.workers[event.workerIndex]
 		worker.status = workerIdle
+		worker.timeBusy += sim.time - worker.taskStartTime
 		worker.jobIndex = nullIndex
 		worker.currentTask=FactoryTask()
 
