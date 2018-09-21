@@ -13,7 +13,6 @@ function animSetIcons(client::WebSocket, sim::Simulation)
 		if name =="background"
 			bg = sim.background
 			map = sim.map
-			(bg.xMin,bg.xMax,bg.yMin,bg.yMax) = (map.xMin-0.15,map.xMax+0.15,map.yMin-0.15,map.yMax+0.15)
 
 			sim.background.imgUrl =  pngFileUrl(joinpath(iconPath, string(name, ".png")))
 			animSetBackground(client, sim)

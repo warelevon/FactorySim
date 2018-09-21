@@ -476,7 +476,6 @@ function initSimulation(configFilename::String;
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.workerStartingLocation, sim.productOrders,sim.productDict)
 	(optimgraph, optimnodes, optimarcs, nodeLookup) =createNetworkGraph(sim.jobs)
-	println(optimarcs .|> a-> a.index)
 	sim.batchesDict = basicBatching(sim, optimnodes)
 	batchGraph!(optimgraph, optimarcs, robot, sim, nodeLookup)
 	assert(all(j->j.releaseTime>=sim.startTime, sim.jobs))
@@ -506,6 +505,10 @@ function initSimulation(configFilename::String;
 	# read misc
 	sim.map = readMapFile(simFilePath("map"))
 	map = sim.map # shorthand
+
+	bg = sim.background
+	(bg.xMin,bg.xMax,bg.yMin,bg.yMax) = (map.xMin-0.255,map.xMax+0.255,map.yMin-0.21,map.yMax+0.21)
+
 	sim.travel = readTravelFile(simFilePath("travel"))
 
 	initTime(t)
