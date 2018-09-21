@@ -40,11 +40,11 @@ end
 
 function freeMachines(sim::Simulation,machineType::MachineType)
 	# returns all free machines of matching machine type
-	return filter(m -> (m.machineType == machineType && !m.isBusy && !m.processingBatch),sim.machines)
+	return filter(m -> (m.machineType == machineType && !m.isBusy && !m.processingBatch && (length(m.batchedJobIndeces)<(sim.maxBatchSizeDict[machineType]+Int(!sim.batchingDict[machineType])))),sim.machines)
 end
 
 function isFreeMachine(sim::Simulation,machineType::MachineType)
-	return !isempty(filter(m -> (m.machineType == machineType && !m.isBusy && !m.processingBatch),sim.machines))
+	return !isempty(filter(m -> (m.machineType == machineType && !m.isBusy && !m.processingBatch && (length(m.batchedJobIndeces)<sim.maxBatchSizeDict[machineType]+Int(!sim.batchingDict[machineType]))),sim.machines))
 end
 
 ## Based off findNearestFreeAmbToCall function in JEMSS
@@ -107,6 +107,9 @@ function batchCheckStart(sim::Simulation, machine::Machine)
 	start = false
 	batchSize = length(machine.batchedJobIndeces)
 	assert(batchSize <= sim.maxBatchSizeDict[machine.machineType])
+	for i in machine.batchedJobIndeces
+		if !(sim.jobs[i].status == jobAtMachine||sim.jobs[i].status == jobBatched);return false;end
+	end
 	if batchSize == sim.maxBatchSizeDict[machine.machineType]
 		start = true
 	else
@@ -202,7 +205,11 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 			machineType = task.machineType
 			closestMachine = nearestMachineToJob(sim,job,machineType)
-			closestMachine.isBusy = true
+			if !sim.batchingDict[machineType]
+				closestMachine.isBusy = true
+			else
+				push!(closestMachine.batchedJobIndeces,job.index)
+			end
 			task.machineIndex = closestMachine.index
 			event.machineIndex = closestMachine.index
 
@@ -290,7 +297,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 				addEvent!(sim.eventList; parentEvent = event, eventType = finishAndRelease, time = (sim.time+task.withoutWorker), workerIndex = event.workerIndex, jobIndex = event.jobIndex,machineIndex=event.machineIndex, task = event.task)
 			end
 		else
-			push!(machine.batchedJobIndeces,job.index)
+			job.status = jobAtMachine
 			if (batchCheckStart(sim, machine) && !machine.processingBatch)
 				machine.processingBatch = true
 				processTime = batchProcessTime(sim,machine.machineType,collect(machine.batchedJobIndeces))
@@ -299,7 +306,6 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 					bTask = bJob.tasks[bJob.taskIndex]
 					bTask.machineProcessStart = sim.time
 					bTask.machineProcessFinish = sim.time + processTime
-					bJob.status = jobAtMachine
 				end
 				addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+sim.setupTimesDict[machine.machineType]), workerIndex = event.workerIndex)
 				addEvent!(sim.eventList; parentEvent = event, eventType = finishBatch, time = sim.time + processTime, machineIndex=machine.index)

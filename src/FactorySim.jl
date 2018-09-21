@@ -35,7 +35,7 @@ export
     writeOrdersFile
 
 export
-    decomposeOrder, eddTaskOrder, checkFreeWorker!, findClosestWorker, freeMachines, isFreeMachine, findClosestMachine, simulateFactoryEvent!
+    decomposeOrder, eddTaskOrder, erdTaskOrder, checkFreeWorker!, findClosestWorker, freeMachines, isFreeMachine, findClosestMachine, simulateFactoryEvent!
 
 export
     resetSim!, simulate!, backupSim!
