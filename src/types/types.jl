@@ -185,6 +185,11 @@ type Simulation
 	workerFree::Bool
     tested::Bool
 
+    #scheduling
+    useSchedule::Bool
+    schedule::Vector{Integer}
+
+
     batchingDict::Dict{MachineType,Bool}
     setupTimesDict::Dict{MachineType,Float}
     maxBatchSizeDict::Dict{MachineType,Integer}
@@ -223,6 +228,7 @@ type Simulation
 	Simulation() = new(nullTime, nullTime, nullTime,
 		Network(), Travel(), Map(), Grid(),nullIndex,Location(),
 		[],Dict(),[], [], [], [], false, false,
+        false, Vector{Integer}(),
         Dict(),Dict(),Dict(),Dict(),
         0,0,
 		[], 0, [],

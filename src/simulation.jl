@@ -95,6 +95,11 @@ function nearestMachineToJob(sim::Simulation, job::Job, machineType::MachineType
 			minTime = travelTime
 		end
 	end
+	if machineIndex == -1
+		println(machineType)
+		println(job)
+		println(freeMachines)
+	end
 	return sim.machines[machineIndex]
 end
 
@@ -154,7 +159,17 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			sim.tested = true
 		end
 		if sim.workerFree
-			addEvent!(sim.eventList; parentEvent = event, eventType = assignClosestAvailableWorker, time = sim.time)
+			if !sim.useSchedule
+				addEvent!(sim.eventList; parentEvent = event, eventType = assignClosestAvailableWorker, time = sim.time)
+			elseif !isempty(sim.schedule)
+				job = sim.jobs[sim.schedule[1]]
+				task = job.tasks[job.taskIndex]
+				if (task in sim.queuedTaskList && FactorySim.isFreeMachine(sim,task.machineType))
+					if job.status == jobQueued || job.status == jobProcessed
+						addEvent!(sim.eventList; parentEvent = event, eventType = assignClosestAvailableWorker, time = sim.time)
+					end
+				end
+			end
 		end
 		##################################
 
@@ -162,8 +177,20 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# get next task in queued tasks and assign the closest worker to that task
 		possibleQueued = sort(filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList),by=t->sim.jobs[t.jobIndex].dueTime)
 		if !isempty(possibleQueued)
-			event.task = shift!(possibleQueued)
+			if sim.useSchedule && !isempty(sim.schedule)
+				job = sim.jobs[(sim.schedule[1])]
+				if job.tasks[job.taskIndex] in sim.queuedTaskList
+					event.task = job.tasks[job.taskIndex]
+					shift!(sim.schedule)
+					filter!(t -> t ≠ event.task, possibleQueued)
+				else
+					event.task = shift!(possibleQueued)
+				end
+			else
+				event.task = shift!(possibleQueued)
+			end
 			task = event.task
+
 			# remove task frome queue
 			filter!(t -> t ≠ task, sim.queuedTaskList)
 			event.jobIndex = task.jobIndex #Set the current job
