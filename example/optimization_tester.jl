@@ -84,6 +84,8 @@ m = collect(1:n)
 m0 = Int64[]
 # Find Cmax for the graph with only conjuctive arcs, no disjunctive arcs
 path = Graphs.bellman_ford_shortest_paths(gc, -eweights1, [1]) # negative weights
+(Graphs.bellman_ford_shortest_paths(gc, eweights1,[2]).dists)[end-1]
+# negative weights
 path.dists = -path.dists # positive weights
 cMax = maximum(path.dists)
 maxL = zeros(length(m))
@@ -111,39 +113,43 @@ for i = 1:length(mDash)
     # generate the 1|rj|Lmax schedule for each machine in mDash
     for j=1:length(miNodes)
         subSchedule[j] = SubSchedule()
-        subSchedule[j].nodeIndex = miNodesIndex[j] # node index
-        subSchedule[j].nodeIndex = miNodesIndex[j] # node index
-        subSchedule[j].releaseTime = path.dists[miNodesIndex[j]] # releaseTime (rj) of job j at machine i
+        n = miNodesIndex[j] # node index, shorthand
+        subSchedule[j].nodeIndex = n
+        SubSchedule[j].jobIndex = miNodes[j]
+        subSchedule[j].releaseTime = path.dists[n] # releaseTime (rj) of job j at machine i
         miWeight = filter(n -> n.sourceIndex==miNodesIndex[j],optimArcs)
         subMiWeight = (miWeight .|> [m -> m.weight])
         subSchedule[j].processingTime = subMiWeight[1] #processing time of  job j at machine i
-        subSchedule[j].dueTime = dueDates[miNodes[j].jobIndex]
+        # Get the critical path from node j to the sink
+        subSchedule[j].cP = Graphs.bellman_ford_shortest_paths(gc, eweights1,[miNodesIndex[j]]).dists[end-1]
+        subSchedule[j].dueTime = cMax-subSchedule[j].cP
         #shifted time origin
         subSchedule[j].shiftedDueTime = subSchedule[j].dueTime - subSchedule[j].releaseTime
+        @show subSchedule[j].dueTime
     end
     # solve the 1|rj|Lmax schedule for each machine in mDash
-
     sortedSubSchedule = sort(subSchedule, by= t -> t.shiftedDueTime)
     subSchedules[i] =  sortedSubSchedule
-    # get the objective value and solution
+
+    ##### get the objective value and solution
     for l = 1:length(miNodes)
         pTime[i] += subSchedules[i][l].processingTime
     end
     lMax[i] = pTime[i] - subSchedules[i][end].dueTime
-    #@show lMax
+    @show lMax
 end
 
 ####### STEP 3:
 ## Schedule the new bottleneck solution in the graph
-(lMax,lMaxIndex) = findmax(lMax)
+(lMax,k) = findmax(lMax)
 sourceNodesUpdate = zeros(0)
 targetNodesUpdate = zeros(0)
 weightsUpdate = zeros(0)
 # Create vectors to add to the graph through the add edge function
-numTasks = length(subSchedules[lMaxIndex])
+numTasks = length(subSchedules[k])
 for i = 1:numTasks-1
-    append!(sourceNodesUpdate, subSchedules[lMaxIndex][i].nodeIndex)
-    append!(targetNodesUpdate, subSchedules[lMaxIndex][i+1].nodeIndex)
+    append!(sourceNodesUpdate, subSchedules[k][i].nodeIndex)
+    append!(targetNodesUpdate, subSchedules[k][i+1].nodeIndex)
     append!(weightsUpdate, 0.0)
 end
 assert(length(sourceNodesUpdate)==length(targetNodesUpdate)==length(weightsUpdate))
