@@ -50,9 +50,10 @@
 	},
 	"background": {
 		"options": {
-			"iconSize":[3098,1528],
-			"iconAnchor":[1549,764],
+			"iconSize":[3000,150],
+			"iconAnchor":[1500,750],
 			"popupAnchor":[0,0]
 		}
 	}
 }
+
