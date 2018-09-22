@@ -32,6 +32,9 @@ export
     readFactConfig, runFactConfig, makeFactoryArcs, makeFactoryNodes, readLocationsFile, fact_animate, makeOrders
 
 export
+    getUtilisation
+
+export
     writeOrdersFile
 
 export
@@ -74,5 +77,6 @@ include("JEMSSImport.jl")
 include("shifting_bottleneck.jl")
 include("create_graphs.jl")
 include("simulation.jl")
+include("stats.jl")
 
 end

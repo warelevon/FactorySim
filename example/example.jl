@@ -16,11 +16,9 @@ sim = initSimulation(simConfigFilename; allowWriteOutput = true)
 openOutputFiles!(sim)
 simulate!(sim)
 closeOutputFiles!(sim)
-sim.numCompletedTasks
-sim.numCompletedJobs
 
+utilisation = getUtilisation(sim)
 
 println("\n=== Resimulating based on output/events file ===")
 sim = initSimulation(simConfigFilename)
-simulate!(sim)
 animate(port = 8001, configFilename = simConfigFilename)

@@ -18,7 +18,7 @@ sourcesD4 = [4,4,8,8,12,12]
 destinationsD4 = [8,12,4,12,4,8]
 weightsD4 = [6.,6.,4.,4.,4.,4.]
 
-# misc input
+# misc hard coded input
 nJobs = 3 # hard coded for now
 nNodes = maximum(targetsC) #nodes
 n = 4 # machines
@@ -68,11 +68,13 @@ for i = 1:numArcs
     optimArcs[i].targetIndex = targetsC[i]
 end
 
+## Create an initial random source seed 
+
 # Create a graph of the conjunctive arcs only
 (gc, eweights1) = createNetworkGraph(sourcesC,targetsC,weightsC)
 
 ######################### will go in shifting_bottleneck.jl function
-#inputs gc, eweights1, nJobs, simFilepath?
+function(gc, eweights1, nJobs, simFilepath?
 rootElt = xmlFileRoot("C:\\Users\\dd\\.julia\\v0.6\\FactorySim\\example\\sim_config.xml") #hard coded for now
 simElt = findElt(rootElt, "sim")
 n = parse(Int, eltContent(simElt, "numMachines"))
@@ -84,12 +86,13 @@ m = collect(1:n)
 m0 = Int64[]
 # Find Cmax for the graph with only conjuctive arcs, no disjunctive arcs
 path = Graphs.bellman_ford_shortest_paths(gc, -eweights1, [1]) # negative weights
-(Graphs.bellman_ford_shortest_paths(gc, eweights1,[2]).dists)[end-1]
 # negative weights
 path.dists = -path.dists # positive weights
 cMax = maximum(path.dists)
 maxL = zeros(length(m))
 addedScheduleNodeIndex = zeros(0)
+
+for
 
 ####### STEP 2:
 # Used for the filter() function in step 2
@@ -115,7 +118,8 @@ for i = 1:length(mDash)
         subSchedule[j] = SubSchedule()
         n = miNodesIndex[j] # node index, shorthand
         subSchedule[j].nodeIndex = n
-        SubSchedule[j].jobIndex = miNodes[j]
+        #@show miNodes[j].jobIndex
+        #SubSchedule[j].jobIndex = miNodes[j][2]
         subSchedule[j].releaseTime = path.dists[n] # releaseTime (rj) of job j at machine i
         miWeight = filter(n -> n.sourceIndex==miNodesIndex[j],optimArcs)
         subMiWeight = (miWeight .|> [m -> m.weight])
@@ -125,18 +129,18 @@ for i = 1:length(mDash)
         subSchedule[j].dueTime = cMax-subSchedule[j].cP
         #shifted time origin
         subSchedule[j].shiftedDueTime = subSchedule[j].dueTime - subSchedule[j].releaseTime
-        @show subSchedule[j].dueTime
+        #@show subSchedule[j].dueTime
     end
     # solve the 1|rj|Lmax schedule for each machine in mDash
     sortedSubSchedule = sort(subSchedule, by= t -> t.shiftedDueTime)
-    subSchedules[i] =  sortedSubSchedule
+    subSchedules[i] =  sortedSubSchedule[1]
 
     ##### get the objective value and solution
     for l = 1:length(miNodes)
         pTime[i] += subSchedules[i][l].processingTime
     end
     lMax[i] = pTime[i] - subSchedules[i][end].dueTime
-    @show lMax
+    #@show lMax
 end
 
 ####### STEP 3:
