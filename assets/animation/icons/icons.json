@@ -16,7 +16,7 @@
 	"job": {
 		"options": {
 			"iconSize":[27,27],
-			"iconAnchor":[15,15],
+			"iconAnchor":[15,-5],
 			"popupAnchor":[0,0]
 		}
 	},
@@ -56,4 +56,3 @@
 		}
 	}
 }
-
