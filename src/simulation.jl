@@ -152,6 +152,17 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 
 		##################################
 
+	elseif eventType == reschedule
+		# Event happens when a job enters the factory
+		# It will take the current task list and call a local search to create  a
+		# newly ordered task list
+		println("**********************")
+		println("jobIndex: ",event.jobIndex,", eventIndex: " ,event.index)
+		println("sim schedule")
+		println(sim.schedule)
+		
+		##################################
+
 	elseif eventType == checkAssign
 		# if a worker is available assign task to worker
 		checkFreeWorker!(sim)
@@ -654,6 +665,7 @@ function initSimulation(configFilename::String;
 	# add first task in each job to event list
 	for j in sim.jobs
 		addEvent!(sim.eventList, j.tasks[1], j.releaseTime)
+		addEvent!(sim.eventList, eventType = reschedule, time = j.releaseTime, jobIndex = j.index)
 	end
 
 

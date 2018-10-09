@@ -17,8 +17,11 @@ openOutputFiles!(sim)
 simulate!(sim)
 closeOutputFiles!(sim)
 
-utilisation = getUtilisation(sim)
+sim
 
 println("\n=== Resimulating based on output/events file ===")
 sim = initSimulation(simConfigFilename)
 animate(port = 8001, configFilename = simConfigFilename)
+
+# Stats and output used for report/talks/compendium
+utilisation = getUtilisation(sim) #for workers
