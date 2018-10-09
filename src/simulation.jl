@@ -162,7 +162,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 			sim.tested = true
 		end
 		if sim.workerFree
-			if !sim.useSchedule
+			if (!sim.useSchedule && !isempty(sort(filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList),by=t->sim.jobs[t.jobIndex].dueTime)) )
 				addEvent!(sim.eventList; parentEvent = event, eventType = assignClosestAvailableWorker, time = sim.time)
 			elseif !isempty(sim.schedule)
 				job = sim.jobs[sim.schedule[1]]
@@ -179,53 +179,51 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 	elseif eventType == assignClosestAvailableWorker
 		# get next task in queued tasks and assign the closest worker to that task
 		possibleQueued = sort(filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList),by=t->sim.jobs[t.jobIndex].dueTime)
-		if !isempty(possibleQueued)
-			if sim.useSchedule && !isempty(sim.schedule)
-				job = sim.jobs[(sim.schedule[1])]
-				if job.tasks[job.taskIndex] in sim.queuedTaskList
-					event.task = job.tasks[job.taskIndex]
-					shift!(sim.schedule)
-					filter!(t -> t ≠ event.task, possibleQueued)
-				else
-					event.task = shift!(possibleQueued)
-				end
+		if sim.useSchedule && !isempty(sim.schedule)
+			job = sim.jobs[(sim.schedule[1])]
+			if job.tasks[job.taskIndex] in sim.queuedTaskList
+				event.task = job.tasks[job.taskIndex]
+				shift!(sim.schedule)
+				filter!(t -> t ≠ event.task, possibleQueued)
 			else
 				event.task = shift!(possibleQueued)
 			end
-			task = event.task
+		else
+			event.task = shift!(possibleQueued)
+		end
+		task = event.task
 
-			# remove task frome queue
-			filter!(t -> t ≠ task, sim.queuedTaskList)
-			event.jobIndex = task.jobIndex #Set the current job
+		# remove task frome queue
+		filter!(t -> t ≠ task, sim.queuedTaskList)
+		event.jobIndex = task.jobIndex #Set the current job
 
-			# find the closest free worker to pair with task
-			job = sim.jobs[event.jobIndex]
-			(job.nearestNodeIndex, dist) = findNearestNodeInGrid(sim.map, sim.grid, sim.net.fGraph.nodes, job.currentLoc)
-			worker = findClosestWorker(sim,job)
+		# find the closest free worker to pair with task
+		job = sim.jobs[event.jobIndex]
+		(job.nearestNodeIndex, dist) = findNearestNodeInGrid(sim.map, sim.grid, sim.net.fGraph.nodes, job.currentLoc)
+		worker = findClosestWorker(sim,job)
 
-			machineType = task.machineType
-			closestMachine = nearestMachineToJob(sim,job,machineType)
-			if !sim.batchingDict[machineType]
-				closestMachine.isBusy = true
-			else
-				push!(closestMachine.batchedJobIndeces,job.index)
-			end
-			task.machineIndex = closestMachine.index
-			event.machineIndex = closestMachine.index
+		machineType = task.machineType
+		closestMachine = nearestMachineToJob(sim,job,machineType)
+		if !sim.batchingDict[machineType]
+			closestMachine.isBusy = true
+		else
+			push!(closestMachine.batchedJobIndeces,job.index)
+		end
+		task.machineIndex = closestMachine.index
+		event.machineIndex = closestMachine.index
 
-			# assigns worker to job
-			assert(job.workerIndex==nullIndex)
-			job.workerIndex = worker.index
-			worker.currentTask = event.task
-			# move worker to job location
-			job.status = jobWaitingForWorker
-			worker.status = workerMovingToJob
-			addEvent!(sim.eventList; parentEvent = event, eventType = moveToJob, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,machineIndex = event.machineIndex,task = event.task)
+		# assigns worker to job
+		assert(job.workerIndex==nullIndex)
+		job.workerIndex = worker.index
+		worker.currentTask = event.task
+		# move worker to job location
+		job.status = jobWaitingForWorker
+		worker.status = workerMovingToJob
+		addEvent!(sim.eventList; parentEvent = event, eventType = moveToJob, time = sim.time, workerIndex = worker.index,jobIndex = event.jobIndex,machineIndex = event.machineIndex,task = event.task)
 
-			# if more tasks available check for more free workers
-			if !isempty(possibleQueued)
-				addEvent!(sim.eventList, eventType = checkAssign, time = sim.time)
-			end
+		# if more tasks available check for more free workers
+		if !isempty(possibleQueued)
+			addEvent!(sim.eventList, eventType = checkAssign, time = sim.time)
 		end
 
 		##################################
@@ -514,6 +512,7 @@ function initSimulation(configFilename::String;
 	(sim.machines, sim.batchingDict, sim.setupTimesDict, sim.maxBatchSizeDict) = readMachinesFile(simFilePath("machines"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.workerStartingLocation, sim.productOrders,sim.productDict)
+	sim.tasks = eddTaskOrder(sim.jobs).factoryTaskList
 	(optimgraph, optimnodes, optimarcs, nodeLookup) =createNetworkGraph(sim.jobs)
 	sim.batchesDict = basicBatching(sim, optimnodes)
 	batchGraph!(optimgraph, optimarcs, robot, sim, nodeLookup)
