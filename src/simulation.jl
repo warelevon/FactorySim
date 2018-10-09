@@ -175,8 +175,8 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		if sim.workerFree
 			if (!sim.useSchedule && !isempty(sort(filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList),by=t->sim.jobs[t.jobIndex].dueTime)) )
 				addEvent!(sim.eventList; parentEvent = event, eventType = assignClosestAvailableWorker, time = sim.time)
-			elseif !isempty(sim.schedule)
-				job = sim.jobs[sim.schedule[1]]
+			elseif !isempty(sim.schedule.jobInds)
+				job = sim.jobs[sim.schedule.jobInds[1]]
 				task = job.tasks[job.taskIndex]
 				if (task in sim.queuedTaskList && FactorySim.isFreeMachine(sim,task.machineType))
 					if job.status == jobQueued || job.status == jobProcessed
@@ -191,11 +191,12 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# get next task in queued tasks and assign the closest worker to that task
 		possibleQueued = sort(filter(t -> FactorySim.isFreeMachine(sim,t.machineType),sim.queuedTaskList),by=t->sim.jobs[t.jobIndex].dueTime)
 		if (!isempty(possibleQueued))
-			if sim.useSchedule && !isempty(sim.schedule)
-				job = sim.jobs[(sim.schedule[1])]
+			if sim.useSchedule && !isempty(sim.schedule.jobInds)
+				job = sim.jobs[(sim.schedule.jobInds[1])]
 				if job.tasks[job.taskIndex] in sim.queuedTaskList
 					event.task = job.tasks[job.taskIndex]
-					shift!(sim.schedule)
+					shift!(sim.schedule.jobInds)
+					shift!(sim.schedule.taskInds)
 					filter!(t -> t ≠ event.task, possibleQueued)
 				else
 					event.task = shift!(possibleQueued)
@@ -524,7 +525,7 @@ function initSimulation(configFilename::String;
 	(sim.machines, sim.batchingDict, sim.setupTimesDict, sim.maxBatchSizeDict) = readMachinesFile(simFilePath("machines"))
 	sim.productDict = readProductDictFile(simFilePath("productDict"))
 	sim.jobs = decomposeOrder(sim.workerStartingLocation, sim.productOrders,sim.productDict)
-	sim.tasks = eddTaskOrder(sim.jobs).factoryTaskList
+	sim.tasks = eddTaskOrder(sim.jobs)
 	(optimgraph, optimnodes, optimarcs, nodeLookup) =createNetworkGraph(sim.jobs)
 	sim.batchesDict = basicBatching(sim, optimnodes)
 	batchGraph!(optimgraph, optimarcs, robot, sim, nodeLookup)

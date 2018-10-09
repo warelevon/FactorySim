@@ -19,31 +19,29 @@ end
 
 function eddTaskOrder(joblist::Vector{Job})
     sortedList = sort(joblist,by= x -> x.dueTime)
-    schedule=Schedule()
+    taskList=Vector{FactoryTask}()
     k=1
     for i = 1: length(sortedList)
         for j = 1:length(sortedList[i].tasks)
-            push!(schedule.factoryTaskList,sortedList[i].tasks[j])
-            schedule.factoryTaskList[k].index=k
+            push!(taskList,sortedList[i].tasks[j])
+            taskList[k].index=k
             k+=1
         end
     end
-    schedule.numTasks = length(schedule.factoryTaskList)
-    return schedule
+    return taskList
 end
 
 
 function erdTaskOrder(joblist::Vector{Job})
     sortedList = sort(joblist,by= x -> x.releaseTime)
-    schedule=Schedule()
+    taskList=Vector{FactoryTask}()
     k=1
     for i = 1: length(sortedList)
         for j = 1:length(sortedList[i].tasks)
-            push!(schedule.factoryTaskList,sortedList[i].tasks[j])
-            schedule.factoryTaskList[k].index=k
+            push!(taskList,sortedList[i].tasks[j])
+            taskList[k].index=k
             k+=1
         end
     end
-    schedule.numTasks = length(schedule.factoryTaskList)
-    return schedule
+    return taskList
 end

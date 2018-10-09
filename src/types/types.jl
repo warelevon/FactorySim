@@ -45,12 +45,10 @@ end
 
 type Schedule
 
-    index::Integer
-    numTasks::Integer
+    jobInds::Vector{Integer}
+    taskInds::Vector{Integer}
 
-    factoryTaskList::Vector{FactoryTask}
-
-    Schedule() = new(nullIndex,0,Vector{FactoryTask}())
+    Schedule() = new(Vector{Integer}(),Vector{Integer}())
 end
 
 type ProductOrder
@@ -189,7 +187,7 @@ type Simulation
 
     #scheduling
     useSchedule::Bool
-    schedule::Vector{Integer}
+    schedule::Schedule
 
 
     batchingDict::Dict{MachineType,Bool}
@@ -230,7 +228,7 @@ type Simulation
 	Simulation() = new(nullTime, nullTime, nullTime,
 		Network(), Travel(), Map(), Grid(),nullIndex,Location(),
 		[],Dict(),[], [], [], [], false, false,
-        false, Vector{Integer}(),
+        false, Schedule(),
         Dict(),Dict(),Dict(),Dict(),
         0,0,
 		[], 0, [],
