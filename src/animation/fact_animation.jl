@@ -58,6 +58,40 @@ function animAddWorkers!(client::WebSocket, sim::Simulation)
 	end
 end
 
+function addStacks!(sim::Simulation,job::Job)
+	for s in sim.currentStacks
+		if !isempty(s.jobs)
+			if JEMSS.isSameLocation(job.currentLoc,s.location)
+				push!(s.jobs,job)
+				s.size+=1
+				return
+			end
+		end
+	end
+	for j in sim.currentJobs
+		if (JEMSS.isSameLocation(job.currentLoc,j.currentLoc)&& job!=j)
+			sim.stackIndex += 1
+			push!(sim.currentStacks, Stack(sim.stackIndex,job))
+			return
+		end
+	end
+end
+
+function updateStacks!(sim::Simulation,job::Job)
+	remStacks!(sim,job)
+	addStacks!(sim,job)
+end
+
+function remStacks!(sim::Simulation,job::Job)
+	for v in sim.currentStacks
+		for i =1:length(v)
+			if v[i] == job
+				deleteat!(v,i)
+			end
+		end
+	end
+end
+
 # write frame updates to client
 function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 
@@ -86,18 +120,24 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 	# shorthand variable names:
 	previousJobs = sim.previousJobs
 	currentJobs = sim.currentJobs
+
+
 	removeJobs = setdiff(previousJobs, currentJobs)
 	updateJobs = intersect(previousJobs, currentJobs)
 	addJobs = setdiff(currentJobs, previousJobs)
+
 	JEMSS.changeMessageDict!(messageDict, "remove_job")
 	for job in removeJobs
 		job.currentLoc = Location()
 		messageDict["job"] = job
 		write(client, json(messageDict))
+		remStacks!(sim,job)
 	end
+
 	JEMSS.changeMessageDict!(messageDict, "move_job")
 	for job in updateJobs
 		updateJobLocation!(sim, job)
+		updateStacks!(sim,job)
 		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
@@ -108,7 +148,33 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
+
+
+	previousStacks = sim.previousStacks
+	currentStacks = sim.currentStacks
+
+	removeStacks = setdiff(previousStacks, currentStacks)
+	updateStacks = intersect(previousStacks, currentStacks)
+	addStacks = setdiff(currentStacks, previousStacks)
+
+	JEMSS.changeMessageDict!(messageDict, "remove_stack")
+	for s in removeStacks
+		messageDict["stack"] = s
+		write(client, json(messageDict))
+	end
+	JEMSS.changeMessageDict!(messageDict, "move_stack")
+	for s in updateStacks
+		messageDict["stack"] = s
+		write(client, json(messageDict))
+	end
+	JEMSS.changeMessageDict!(messageDict, "add_stack")
+	for s in addStacks
+		messageDict["stack"] = s
+		write(client, json(messageDict))
+	end
+
 	sim.previousJobs = deepcopy(sim.currentJobs) # update previousCalls
+	sim.previousStacks = deepcopy(sim.currentStacks)
 end
 
 # update call current location
@@ -132,6 +198,7 @@ function updateJobLocation!(sim::Simulation, job::Job)
 		job.currentLoc.y = iLoc.y + (taskPerc * (oLoc.y-iLoc.y))
 		job.movedLoc = true
 	end
+
 end
 
 wsh = WebSocketHandler() do req::Request, client::WebSocket

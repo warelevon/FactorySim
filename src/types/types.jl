@@ -49,6 +49,7 @@ type Schedule
     taskInds::Vector{Integer}
 
     Schedule() = new(Vector{Integer}(),Vector{Integer}())
+    Schedule(size::Integer) = new(Vector{Integer}(size),Vector{Integer}(size))
 end
 
 type ProductOrder
@@ -163,6 +164,16 @@ type Resimulation
 		[], [], nullIndex)
 end
 
+type Stack
+    index::Integer
+    jobs::Set{Job}
+    size::Integer
+    location::Location
+
+    Stack() = new(nullIndex,Set{Job}(),nullIndex,Location())
+    Stack(i,job) = new(i,Set{Job}([job]),1,deepcopy(job.currentLoc))
+end
+
 type Simulation
 	startTime::Float
 	time::Float
@@ -207,7 +218,10 @@ type Simulation
 
 	# for animation:
 	currentJobs::Set{Job} # all calls between arrival and service finish at current time
+    currentStacks::Vector{Stack}
+    stackIndex::Integer
 	previousJobs::Set{Job} # calls in currentCalls for previous frame
+    previousStacks::Vector{Stack}
     background::Background
 
 	# files/folders:
@@ -233,7 +247,7 @@ type Simulation
         0,0,
 		[], 0, [],
         Resimulation(),
-		Set(), Set(),Background(),
+		Set(), [], 0, Set(), [], Background(),
 		"", "", Dict(), Dict(), IOStream(""),
 		false,
 		false, false)

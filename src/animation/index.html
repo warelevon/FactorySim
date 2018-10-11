@@ -173,6 +173,18 @@
 					var j = msgObj.job
 					removeJob(j.index)
 					break;
+				case "add_stack":
+					var s = msgObj.stack
+					addStack(length(s), s[1].currentLoc.y, s[1].currentLoc.x)
+					break;
+				case "move_stack":
+					var s = msgObj.stack
+					moveStack(length(s), s[1].currentLoc.y, s[1].currentLoc.x)
+					break;
+				case "remove_stack":
+					var s = msgObj.stack
+					removeStack(j.index)
+					break;
 				case "prepared_next_frame":
 					getNextFrame(msgObj.time)
 					break;
