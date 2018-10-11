@@ -69,9 +69,7 @@
 	<div id="map_id" class="map"></div>
 	<div id="map_legend" class="legend">
 		<div><h3>Legend</h3></div>
-		<div>workers</div>
-		<div><img id="image_worker_free"/>free worker</div>
-		<div><img id="image_worker_busy"/>busy worker</div>
+		<div><img id="image_worker_free"/>worker</div>
 		<div><img id="image_job"/>job</div>
 		<div>machine types:</div>
 		<div><img id="image_machine_robot"/>robot</div>
@@ -84,7 +82,7 @@
 			<input type="button" class="button" id="run_pause_button" value="Run" style="width:50px" />
 			<input type="button" class="button" id="stop_button" value="Stop" style="width:50px" />
 		</div>
-		<div>Time: <span id="sim_time" size="8" maxlength="11"></span></div>
+		<div>Time: <span id="display_sim_time" size="8" maxlength="11"></span></div>
 		<div>Jump to time: <input id="new_sim_time" type="text" value="" size="7" maxlength="10"></input></div>
 		<div>Speed ( ≥ 1): <input id="sim_speed" type="text" value="200" size="5" maxlength="8"></input></div>
 		<div>FPS (1-100): <input id="fps" type="text" value="30" size="1" maxlength="3"></input></div>
@@ -307,6 +305,7 @@
 		function updateSimTime(time) {
 			simTime = time;
 			$("#sim_time").text( (simTime).toFixed(5) );
+			$("#display_sim_time").text( (simTime-simStartTime).toFixed(5) );
 			calcFrameSimTime();
 			nextSimTime = simTime + frameSimTime;
 		}
