@@ -23,7 +23,7 @@
 	"machine_robot": {
 		"options": {
 			"iconSize":[184,184],
-			"iconAnchor":[96,104],
+			"iconAnchor":[132,76],
 			"popupAnchor":[0,0]
 		}
 	},
