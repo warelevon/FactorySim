@@ -27,6 +27,7 @@ end
 
 ## Based off readGenConfig in JEMSS with changes due to separate problem structure
 function readFactConfig(factConfigFilename::String)
+	## Author: Ali ##
 	# read gen config xml file
 	rootElt = xmlFileRoot(factConfigFilename)
 	#println("rootElt is:", name(rootElt)) # Debugging
@@ -70,26 +71,27 @@ end
 
 
 function runFactConfig(factConfigFilename::String; overwriteInputPath::Bool = false)
+	## Author: Ali ##
 	factConfig = readFactConfig(factConfigFilename)
 
-#	if isdir(factConfig.inputPath) && !overwriteInputPath
-#		println("input path already exists: ", factConfig.inputPath)
-#		print("Delete folder contents and continue anyway? (y = yes): ")
-#		response = chomp(readline())
-#		if response != "y"
-#			println("stopping")
-#			return
-#		else
-#			overwriteInputPath = true
-#		end
-#	end
-#	if isdir(factConfig.inputPath) && overwriteInputPath
-#		println("Deleting folder contents: ", factConfig.inputPath)
-#		rm(factConfig.inputPath; recursive=true)
-#	end
-#	if !isdir(factConfig.inputPath)
-#		mkdir(factConfig.inputPath)
-#	end
+	#if isdir(factConfig.inputPath) && !overwriteInputPath
+	#	println("input path already exists: ", factConfig.inputPath)
+	#	print("Delete folder contents and continue anyway? (y = yes): ")
+	#	response = chomp(readline())
+	#	if response != "y"
+	#		println("stopping")
+	#		return
+	#	else
+	#		overwriteInputPath = true
+	#	end
+	#end
+	#if isdir(factConfig.inputPath) && overwriteInputPath
+	#	println("Deleting folder contents: ", factConfig.inputPath)
+	#	rm(factConfig.inputPath; recursive=true)
+	#end
+	#if !isdir(factConfig.inputPath)
+	#	mkdir(factConfig.inputPath)
+	#end
 
 	println("Generation mode: ", factConfig.mode)
 	# make productOrders
@@ -102,6 +104,7 @@ end
 
 ## Based off JEMSS makeCalls function, changed to orders for our project structure
 function makeOrders(factConfig::FactConfig)
+	## Author: Ali ##
 	productOrders = Vector{ProductOrder}(factConfig.numOrders)
 
 	# factConfig.startTime is the the number of seconds after 00:00 today

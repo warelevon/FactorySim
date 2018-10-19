@@ -46,13 +46,13 @@ export
 export # file_io functions
     readOrderListFile, readMachinesFile, readWorkersFile, openOutputFiles!, writeEventToFile!, closeOutputFiles!, readProductOrdersFile
 
-export
+export # types
     FactoryTask, Job, Schedule, ProductOrder, Worker, Machine, Event, Resimulation, Simulation
 
-export shiftingBottleNeck
+#heuristic functions
+export shiftingBottleNeck, createNetworkGraph
 
-export createNetworkGraph
-
+# export all enumeration types
 export
     MachineType, nullMachineType, workbench, robot,
     ProductType, nullProductType, chair, table,

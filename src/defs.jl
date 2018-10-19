@@ -19,6 +19,7 @@ const nullTime = -1.0
 const nullDist = -1.0
 
 
+# enumerations of types and statuses
 @enum MachineType nullMachineType=0 robot=1 assembleBench=2 paintBench=3 boxing=4 delivery=5
 
 @enum ProductType nullProductType=0 chair=1 table=2
