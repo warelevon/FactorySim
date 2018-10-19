@@ -1,6 +1,6 @@
-
-
 function addEvent!(eventList::Vector{Event};
+	## slight change from JEMSS function of the same name ##
+	## Author: Levon ##
 	parentEvent::Event = Event(), eventType::EventType = nullEvent, time::Float = nullTime,
 	workerIndex::Integer = nullIndex, jobIndex::Integer = nullIndex, machineIndex::Integer = nullIndex,
 	task::FactoryTask = FactoryTask())
@@ -23,12 +23,14 @@ function addEvent!(eventList::Vector{Event};
 	return event
 end
 
-
 function addEvent!(eventList::Vector{Event}, task::FactoryTask, startTime::Float)
+	## Author: Levon ##
 	addEvent!(eventList, eventType=taskReleased,time=startTime,jobIndex = task.jobIndex,task=task)
 end
 
 function checkFreeWorker!(sim::Simulation)
+	## Author: Levon ##
+	# checks sim to see if workers are free
 	sim.workerFree=false
 	for worker in sim.workers
 		if worker.status==workerIdle
@@ -39,16 +41,20 @@ function checkFreeWorker!(sim::Simulation)
 end
 
 function freeMachines(sim::Simulation,machineType::MachineType)
+	## Author: Levon ##
 	# returns all free machines of matching machine type
 	return filter(m -> (m.machineType == machineType && !m.isBusy && !m.processingBatch && (length(m.batchedJobIndeces)<(sim.maxBatchSizeDict[machineType]+Int(!sim.batchingDict[machineType])))),sim.machines)
 end
 
 function isFreeMachine(sim::Simulation,machineType::MachineType)
-	return !isempty(filter(m -> (m.machineType == machineType && !m.isBusy && !m.processingBatch && (length(m.batchedJobIndeces)<sim.maxBatchSizeDict[machineType]+Int(!sim.batchingDict[machineType]))),sim.machines))
+	## Author: Levon ##
+	# returns boolean of whether a machine of a certain type is available
+	return !isempty(freeMachines(sim,machineType)
 end
 
 ## Based off findNearestFreeAmbToCall function in JEMSS
 function findClosestWorker(sim::Simulation,currentJob::Job)
+	## Author: Ali ##
 	# Find the nearest node to the job location> This is independent of the workers
 	(node2,dist2) = (currentJob.nearestNodeIndex,currentJob.nearestNodeDist) # is nearestNodeIndex set?
 	travelMode = sim.travel.modes[1] # Could change for when the worker is moving a job
@@ -74,6 +80,7 @@ end
 
 ## based off nearestHospitalToCall function in JEMSS
 function nearestMachineToJob(sim::Simulation, job::Job, machineType::MachineType)
+	## Author: Ali ##
 	# Find the nearest node to the job location> This is independent of the workers
 	(node1,dist1) = (job.nearestNodeIndex,job.nearestNodeDist) # is nearestNodeIndex set?
 	travelMode = sim.travel.modes[1] # Could change for when the worker is moving a job
@@ -104,14 +111,20 @@ function nearestMachineToJob(sim::Simulation, job::Job, machineType::MachineType
 end
 
 function batchCheckStart(sim::Simulation, machine::Machine)
+	## Author: Levon ##
+	# checks whether batched machine should process batch
 	start = false
 	batchSize = length(machine.batchedJobIndeces)
 	assert(batchSize <= sim.maxBatchSizeDict[machine.machineType])
+
+	# if not all jobs are at the machine do not process
 	for i in machine.batchedJobIndeces
 		if !(sim.jobs[i].status == jobAtMachine||sim.jobs[i].status == jobBatched);return false;end
 	end
+	# if there are the maximum number of jobs currently batched then process immediately
 	if batchSize == sim.maxBatchSizeDict[machine.machineType]
 		start = true
+	# if number of batched jobs is equal to the number of remaining jobs then process
 	else
 		numSameTypeRemaining = 0
 		remainingIndeces = setdiff(Set(1:length(sim.jobs)),machine.batchedJobIndeces)
@@ -124,6 +137,8 @@ function batchCheckStart(sim::Simulation, machine::Machine)
 end
 
 function batchProcessTime(sim::Simulation,machineType::MachineType,batchedJobIndeces::Vector{Integer})
+	## Author: Levon ##
+	# calculates processing time as sum of batched machines processing time plus the machines setup time
 	processTime = sim.setupTimesDict[machineType]
 	for i in batchedJobIndeces
 		job = sim.jobs[i]
@@ -131,10 +146,9 @@ function batchProcessTime(sim::Simulation,machineType::MachineType,batchedJobInd
 	end
 	return processTime
 end
+
 function simulateFactoryEvent!(sim::Simulation, event::Event)
-	# format:
-	# next event may change relevant ambulance / call fields at event.time
-	# event may then trigger future events / cancel scheduled events
+	## Author: Levon ##
 
 	assert(sim.time == event.time)
 	eventType = event.eventType
@@ -153,6 +167,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		##################################
 
 	elseif eventType == reschedule
+		## to be implemented
 		# Event happens when a job enters the factory
 		# It will take the current task list and call a local search to create  a
 		# newly ordered task list
@@ -443,10 +458,12 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 end
 
 function initWorker!(sim::Simulation, worker::Worker)
+	## Author: Levon ##
+	# based upon JEMSS function initAmb! #
 	assert(worker.index != nullIndex)
 
-	# create route that mimics ambulance driving from nowhere,
-	# to a node (nearest to station), then to station, before simulation began
+	# create route that mimics worker walking from nowhere,
+	# to a node (nearest to starting location), then to the starting location, before simulation began
 	worker.route = Route()
 	worker.route.startLoc = Location()
 	worker.route.endLoc = deepcopy(sim.workerStartingLocation)
@@ -455,12 +472,9 @@ function initWorker!(sim::Simulation, worker::Worker)
 	worker.status = workerIdle
 end
 
-
-
-
 function initSimulation(configFilename::String;
 	createBackup::Bool = true, allowWriteOutput::Bool = false)
-
+	# mostly based on unchanged function from JEMSS. Sections with changes will be outlined with "#### CHANGES START ####" and "#### CHANGES END ####"
 	# read sim config xml file
 	rootElt = xmlFileRoot(configFilename)
 	@assert(name(rootElt) == "simConfig", string("xml root has incorrect name: ", name(rootElt)))
@@ -515,6 +529,9 @@ function initSimulation(configFilename::String;
 
 	simFilePath(name::String) = sim.inputFiles[name].path
 
+	#######################
+	#### CHANGES START ####
+	#######################
 
 	sim.workers = readWorkersFile(simFilePath("workers"))
 	(sim.productOrders, sim.startTime, sim.workerStartingLocation) = readProductOrdersFile(simFilePath("productOrders"))
@@ -527,6 +544,10 @@ function initSimulation(configFilename::String;
 	sim.batchesDict = basicBatching(sim, optimnodes)
 	if sim.batchingDict[robot];batchGraph!(optimgraph, optimarcs, robot, sim, nodeLookup);end
 	assert(all(j->j.releaseTime>=sim.startTime, sim.jobs))
+
+	#######################
+	#### CHANGES END ######
+	#######################
 
 	# read network data
 	sim.net = Network()
@@ -554,8 +575,16 @@ function initSimulation(configFilename::String;
 	sim.map = readMapFile(simFilePath("map"))
 	map = sim.map # shorthand
 
+	#######################
+	#### CHANGES START ####
+	#######################
+
 	bg = sim.background
 	(bg.xMin,bg.xMax,bg.yMin,bg.yMax) = (map.xMin-0.255,map.xMax+0.255,map.yMin-0.21,map.yMax+0.21)
+
+	#######################
+	#### CHANGES END ######
+	#######################
 
 	sim.travel = readTravelFile(simFilePath("travel"))
 
@@ -644,10 +673,12 @@ function initSimulation(configFilename::String;
 
 	println("nodes: ", length(fGraph.nodes), ", grid size: ", nx, " x ", ny)
 
-	##################
-	# sim - ambulances, calls, hospitals, stations...
+	#######################
+	#### CHANGES START ####
+	#######################
+	# sim - workers, jobs, machines...
 
-	initMessage(t, "adding workers, calls, etc")
+	initMessage(t, "adding workers, jobs, etc")
 
 	# for each call, hospital, and station, find neareset node
 	for m in sim.machines
@@ -675,6 +706,10 @@ function initSimulation(configFilename::String;
 		initWorker!(sim,w)
 	end
 
+	#######################
+	#### CHANGES END ######
+	#######################
+
 	initTime(t)
 
 	if createBackup
@@ -688,6 +723,7 @@ end
 
 
 function backupSim!(sim::Simulation)
+	## unchanged copy of JEMSS function of the same name ##
 	assert(!sim.used)
 
 	# remove net, travel, grid, and resim from sim before copying sim
@@ -701,6 +737,8 @@ end
 
 # reset sim from sim.backup
 function resetSim!(sim::Simulation)
+	## based on function of same name from JEMSS ##
+	## Author: Levon ##
 	assert(!sim.backup.used)
 
 	if sim.used
@@ -731,6 +769,8 @@ function resetSim!(sim::Simulation)
 end
 
 function resetJobs!(sim::Simulation)
+	## based on JEMSS function resetCalls! ##
+	## Author: Levon ##
 	assert(!sim.backup.used)
 
 	# shorthand:
@@ -754,7 +794,7 @@ function resetJobs!(sim::Simulation)
 	recentJobIndex = findlast(job -> job.releaseTime <= sim.time, jobs)
 	assert(all(i -> jobs[i].status == nullJobStatus, recentJobIndex+1:numJobs))
 
-	# reset calls that arrived before (or at) sim.time
+	# reset tasks that arrived before (or at) sim.time
 	for jname in jnames
 		if typeof(getfield(nullJob, jname)) <: Number
 			for i = 1:recentJobIndex
@@ -780,27 +820,4 @@ function resetJobs!(sim::Simulation)
 			end
 		end
 	end
-end
-
-
-function batchCheckScheduleStart(sim::Simulation, machine::Machine)
-	batchSize = length(machine.batchedJobIndeces)
-	assert(batchSize <= sim.maxBatchSizeDict[machine.machineType])
-	for i in machine.batchedJobIndeces
-		if !(sim.jobs[i].status == jobAtMachine||sim.jobs[i].status == jobBatched);return false;end
-	end
-	if batchSize == sim.maxBatchSizeDict[machine.machineType]
-		return true
-	elseif !sim.useSchedule
-		numSameTypeRemaining = 0
-		remainingIndeces = setdiff(Set(1:length(sim.jobs)),machine.batchedJobIndeces)
-		for i in remainingIndeces
-			numSameTypeRemaining += length(filter(t -> (!t.isComplete && t.machineType==machine.machineType),sim.jobs[i].tasks))
-		end
-		if numSameTypeRemaining == 0; return true; end
-	else
-		if isempty(sim.schedule.jobInds);return true; end
-		if sim.schedule.jobInds[1] in machine.batchedJobIndeces; return true; end
-	end
-	return false
 end
