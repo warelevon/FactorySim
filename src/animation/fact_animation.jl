@@ -4,18 +4,19 @@ global animPort = nullIndex # localhost port for animation, to be set
 
 
 
-function animSetIcons(client::WebSocket, sim::Simulation)
+function animSetIcons!(client::WebSocket, sim::Simulation)
+	## Partially changed function from JEMSS ##
+	## Based on function of same name ##
 	pngFileUrl(filename) = string("data:image/png;base64,", filename |> read |> base64encode)
 	iconPath = joinpath(@__DIR__, "..", "..", "assets", "animation", "icons")
 	icons = JSON.parsefile(joinpath(iconPath, "icons.json"))
 	# set iconUrl for each icon
 	for (name, icon) in icons
-		if name =="background"
-			bg = sim.background
-			map = sim.map
-
-			sim.background.imgUrl =  pngFileUrl(joinpath(iconPath, string(name, ".png")))
-			animSetBackground(client, sim)
+		if name =="background"																		###
+			bg = sim.background																		###
+			map = sim.map																			###
+			sim.background.imgUrl =  pngFileUrl(joinpath(iconPath, string(name, ".png")))			###
+			animSetBackground(client, sim)															###
 		else
 			icon["options"]["iconUrl"] = pngFileUrl(joinpath(iconPath, string(name, ".png")))
 		end
@@ -26,22 +27,18 @@ function animSetIcons(client::WebSocket, sim::Simulation)
 	write(client, json(messageDict))
 end
 
-function fact_animate(; port::Int = 8001, configFilename::String = "", openWindow::Bool = true)
-	global animConfigFilenames
-	if runAnimServer(port)
-		if configFilename != ""
-			push!(animConfigFilenames, configFilename)
-		end
-		openWindow ? openLocalhost(port) : println("waiting for window with port $port to be opened")
-	end
-end
+# sets background image of mapbox
 function animSetBackground(client::WebSocket, sim::Simulation)
+	# New function created by levon to call json to create background image in sim #
 	messageDict = JEMSS.createMessageDict("set_background")
 	messageDict["background"] = sim.background
 	write(client, json(messageDict))
 	delete!(messageDict, "background")
 end
+
 function animAddMachines(client::WebSocket, sim::Simulation)
+	## Partially changed function from JEMSS ##
+	## Based on animAddBuildings ##
 	messageDict = JEMSS.createMessageDict("add_machine")
 	for m in sim.machines
 		messageDict["machine"] = m
@@ -51,6 +48,8 @@ function animAddMachines(client::WebSocket, sim::Simulation)
 end
 
 function animAddWorkers!(client::WebSocket, sim::Simulation)
+	## Partially changed function from JEMSS ##
+	## Based on animAddAmbs! ##
 	messageDict = JEMSS.createMessageDict("add_worker")
 	for worker in sim.workers
 		worker.currentLoc = JEMSS.getRouteCurrentLocation!(sim.net, worker.route, sim.startTime)
@@ -59,17 +58,10 @@ function animAddWorkers!(client::WebSocket, sim::Simulation)
 	end
 end
 
-function addStacks!(sim::Simulation,job::Job)
-end
-
-function updateStacks!(sim::Simulation,job::Job)
-end
-
-function remStacks!(sim::Simulation,job::Job)
-end
-
 # write frame updates to client
 function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
+	## Partially changed function from JEMSS ##
+	## Based on function of same name ##
 
 	# check which ambulances have moved since last frame
 	# need to do this before showing call locations
@@ -91,8 +83,8 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 	end
 	delete!(messageDict, "worker")
 
-	# determine which calls to remove, update, and add
-	# need to do this after finding new ambulance locations
+	# determine which jobs to remove, update, and add
+	# need to do this after finding new worker locations
 	# shorthand variable names:
 	previousJobs = sim.previousJobs
 	currentJobs = sim.currentJobs
@@ -123,36 +115,14 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 		write(client, json(messageDict))
 	end
 
-
-	previousStacks = sim.previousStacks
-	currentStacks = sim.currentStacks
-
-	removeStacks = setdiff(previousStacks, currentStacks)
-	updateStacks = intersect(previousStacks, currentStacks)
-	addStacks = setdiff(currentStacks, previousStacks)
-
-	JEMSS.changeMessageDict!(messageDict, "remove_stack")
-	for s in removeStacks
-		messageDict["stack"] = s
-		write(client, json(messageDict))
-	end
-	JEMSS.changeMessageDict!(messageDict, "move_stack")
-	for s in updateStacks
-		messageDict["stack"] = s
-		write(client, json(messageDict))
-	end
-	JEMSS.changeMessageDict!(messageDict, "add_stack")
-	for s in addStacks
-		messageDict["stack"] = s
-		write(client, json(messageDict))
-	end
-
-	sim.previousJobs = deepcopy(sim.currentJobs) # update previousCalls
-	sim.previousStacks = deepcopy(sim.currentStacks)
+	sim.previousJobs = deepcopy(sim.currentJobs) # update previousJobs
 end
 
 # update call current location
 function updateJobLocation!(sim::Simulation, job::Job, time::Float)
+	## Partially changed function from JEMSS ##
+	## Based on updateCallLocation! ##
+
 	# consider moving job if the status indicates worker moving job
 	if job.status == jobGoingToMachine
 		worker = sim.workers[job.workerIndex]
@@ -160,6 +130,7 @@ function updateJobLocation!(sim::Simulation, job::Job, time::Float)
 		if worker.movedLoc
 			job.currentLoc = deepcopy(worker.currentLoc)
 		end
+	# consider moving job if being processed through machine
 	elseif job.status == jobAtMachine
 		task = job.tasks[job.taskIndex]
 		machine = sim.machines[task.machineIndex]
@@ -168,6 +139,7 @@ function updateJobLocation!(sim::Simulation, job::Job, time::Float)
 		taskProg = time - task.machineProcessStart
 		taskTotal = task.machineProcessFinish - task.machineProcessStart
 		taskPerc = taskProg/taskTotal
+		# jobs location reflects progress through machine
 		job.currentLoc.x = iLoc.x + (taskPerc * (oLoc.x-iLoc.x))
 		job.currentLoc.y = iLoc.y + (taskPerc * (oLoc.y-iLoc.y))
 		job.movedLoc = true
@@ -176,6 +148,9 @@ function updateJobLocation!(sim::Simulation, job::Job, time::Float)
 end
 
 wsh = WebSocketHandler() do req::Request, client::WebSocket
+	## Partially changed function from JEMSS ##
+	## Based on function of same name ##
+	## almost no changes made to this function ##
 	global animConnections, animConfigFilenames
 
 	animConnections[client.id] = client
@@ -199,7 +174,7 @@ wsh = WebSocketHandler() do req::Request, client::WebSocket
 	messageDict["time"] = sim.startTime
 	write(client, json(messageDict))
 
-	animSetIcons(client, sim) # set icons before adding items to map
+	animSetIcons!(client, sim) # set icons before adding items to map
 	JEMSS.animAddNodes(client, sim.net.fGraph.nodes)
 	JEMSS.animAddArcs(client, sim.net) # add first, should be underneath other objects
 	JEMSS.animSetArcSpeeds(client, sim.map, sim.net)
@@ -238,7 +213,7 @@ wsh = WebSocketHandler() do req::Request, client::WebSocket
 
 		elseif msgType == "update_icons"
 			try
-				animSetIcons(client)
+				animSetIcons!(client)
 			catch e
 				warn("Could not update animation icons")
 				warn(e)
@@ -258,6 +233,7 @@ end
 # can set the port for the connection, and the simulation config filename
 # openWindow = false prevents a browser window from opening automatically, will need to open manually
 function animate(; port::Int = 8001, configFilename::String = "", openWindow::Bool = true)
+	# Unedited function from JEMSS #
 	global animConfigFilenames
 	if runAnimServer(port)
 		if configFilename != ""
@@ -270,6 +246,7 @@ end
 # creates and runs server for given port
 # returns true if server is running, false otherwise
 function runAnimServer(port::Int)
+	# Unedited function from JEMSS #
 	# check if port already in use
 	global animPort
 	if port == animPort && port != nullIndex
