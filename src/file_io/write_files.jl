@@ -1,4 +1,7 @@
+## All functions in this file are slight edits of the respective functionss from JEMSS in write_sim_files.jl
+
 function openOutputFiles!(sim::Simulation)
+	## Author: Ali ##
 	if !sim.writeOutput; return; end
 
 	println("output path: ", sim.outputPath)
@@ -32,6 +35,7 @@ function openOutputFiles!(sim::Simulation)
 end
 
 function writeEventToFile!(sim::Simulation, event::Event)
+	## Author: Ali ##
 	if !sim.writeOutput; return; end
 
 	writeDlmLine!(sim.eventsFileIO, event.index, event.parentIndex, @sprintf("%0.5f", event.time), Int(event.eventType), event.workerIndex, event.jobIndex, event.machineIndex, length(sim.eventList))
