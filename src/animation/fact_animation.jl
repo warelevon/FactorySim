@@ -20,6 +20,7 @@ function animSetIcons(client::WebSocket, sim::Simulation)
 			icon["options"]["iconUrl"] = pngFileUrl(joinpath(iconPath, string(name, ".png")))
 		end
 	end
+	delete!(icons,"background")
 	messageDict = JEMSS.createMessageDict("set_icons")
 	merge!(messageDict, icons)
 	write(client, json(messageDict))
@@ -59,37 +60,12 @@ function animAddWorkers!(client::WebSocket, sim::Simulation)
 end
 
 function addStacks!(sim::Simulation,job::Job)
-	for s in sim.currentStacks
-		if !isempty(s.jobs)
-			if JEMSS.isSameLocation(job.currentLoc,s.location)
-				push!(s.jobs,job)
-				s.size+=1
-				return
-			end
-		end
-	end
-	for j in sim.currentJobs
-		if (JEMSS.isSameLocation(job.currentLoc,j.currentLoc)&& job!=j)
-			sim.stackIndex += 1
-			push!(sim.currentStacks, Stack(sim.stackIndex,job))
-			return
-		end
-	end
 end
 
 function updateStacks!(sim::Simulation,job::Job)
-	remStacks!(sim,job)
-	addStacks!(sim,job)
 end
 
 function remStacks!(sim::Simulation,job::Job)
-	for v in sim.currentStacks
-		for i =1:length(v)
-			if v[i] == job
-				deleteat!(v,i)
-			end
-		end
-	end
 end
 
 # write frame updates to client
@@ -106,7 +82,7 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 		if !JEMSS.isSameLocation(workerLocation, worker.currentLoc)
 			worker.currentLoc = deepcopy(workerLocation)
 			worker.movedLoc = true
-			# move ambulance
+			# move worker
 			messageDict["worker"] = worker
 			write(client, json(messageDict))
 		else
@@ -131,20 +107,18 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 		job.currentLoc = Location()
 		messageDict["job"] = job
 		write(client, json(messageDict))
-		remStacks!(sim,job)
 	end
 
 	JEMSS.changeMessageDict!(messageDict, "move_job")
 	for job in updateJobs
-		updateJobLocation!(sim, job)
-		updateStacks!(sim,job)
+		updateJobLocation!(sim, job, time)
 		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
 	JEMSS.changeMessageDict!(messageDict, "add_job")
 	for job in addJobs
 		job.movedLoc = false
-		updateJobLocation!(sim, job)
+		updateJobLocation!(sim, job, time)
 		messageDict["job"] = job
 		write(client, json(messageDict))
 	end
@@ -178,7 +152,7 @@ function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 end
 
 # update call current location
-function updateJobLocation!(sim::Simulation, job::Job)
+function updateJobLocation!(sim::Simulation, job::Job, time::Float)
 	# consider moving job if the status indicates worker moving job
 	if job.status == jobGoingToMachine
 		worker = sim.workers[job.workerIndex]
@@ -191,7 +165,7 @@ function updateJobLocation!(sim::Simulation, job::Job)
 		machine = sim.machines[task.machineIndex]
 		oLoc = deepcopy(machine.outputLocation)
 		iLoc = deepcopy(machine.inputLocation)
-		taskProg = sim.time - task.machineProcessStart
+		taskProg = time - task.machineProcessStart
 		taskTotal = task.machineProcessFinish - task.machineProcessStart
 		taskPerc = taskProg/taskTotal
 		job.currentLoc.x = iLoc.x + (taskPerc * (oLoc.x-iLoc.x))

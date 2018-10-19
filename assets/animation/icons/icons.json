@@ -1,12 +1,5 @@
 {
-	"worker_busy": {
-		"options": {
-			"iconSize":[34,34],
-			"iconAnchor":[18,16],
-			"popupAnchor":[0,0]
-		}
-	},
-	"worker_free": {
+	"worker": {
 		"options": {
 			"iconSize":[34,34],
 			"iconAnchor":[18,16],
@@ -15,36 +8,36 @@
 	},
 	"job": {
 		"options": {
-			"iconSize":[27,27],
-			"iconAnchor":[15,-5],
+			"iconSize":[40,40],
+			"iconAnchor":[4,20],
 			"popupAnchor":[0,0]
 		}
 	},
 	"machine_robot": {
 		"options": {
 			"iconSize":[184,184],
-			"iconAnchor":[132,76],
+			"iconAnchor":[30,92],
 			"popupAnchor":[0,0]
 		}
 	},
 	"machine_paintBench": {
 		"options": {
-			"iconSize":[92,92],
-			"iconAnchor":[48,52],
+			"iconSize":[120,60],
+			"iconAnchor":[60,30],
 			"popupAnchor":[0,0]
 		}
 	},
 	"machine_assembleBench": {
 		"options": {
-			"iconSize":[92,92],
-			"iconAnchor":[48,52],
+			"iconSize":[120,60],
+			"iconAnchor":[60,30],
 			"popupAnchor":[0,0]
 		}
 	},
 	"machine_boxing": {
 		"options": {
-			"iconSize":[46,46],
-			"iconAnchor":[24,26],
+			"iconSize":[120,60],
+			"iconAnchor":[60,30],
 			"popupAnchor":[0,0]
 		}
 	},

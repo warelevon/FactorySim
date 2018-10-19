@@ -249,15 +249,11 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# set worker as busy
 		worker = sim.workers[event.workerIndex]
 		worker.jobIndex = event.jobIndex
-
 		#find distance and nearest node of job from worker
 		(sim.jobs[event.jobIndex].nearestNodeIndex, dist) = findNearestNodeInGrid(sim.map, sim.grid, sim.net.fGraph.nodes, location)
-		if dist>0
-			changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time, deepcopy(location), sim.jobs[event.jobIndex].nearestNodeIndex)
-			arrivalTime = sim.workers[event.workerIndex].route.endTime
-		else
-			arrivalTime = sim.time
-		end
+		changeRoute!(sim, sim.workers[event.workerIndex].route, sim.time, deepcopy(location), sim.jobs[event.jobIndex].nearestNodeIndex)
+		arrivalTime = sim.workers[event.workerIndex].route.endTime
+
 		addEvent!(sim.eventList; parentEvent = event, eventType = arriveAtJob, time = arrivalTime, workerIndex = worker.index,jobIndex = event.jobIndex,machineIndex = event.machineIndex,task = event.task)
 		##################################
 
@@ -319,12 +315,13 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 				processTime = batchProcessTime(sim,machine.machineType,collect(machine.batchedJobIndeces))
 				for i in machine.batchedJobIndeces
 					bJob = sim.jobs[i]
+					bJob.status = jobAtMachine
 					bTask = bJob.tasks[bJob.taskIndex]
 					bTask.machineProcessStart = sim.time
 					bTask.machineProcessFinish = sim.time + processTime
 				end
 				addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+sim.setupTimesDict[machine.machineType]), workerIndex = event.workerIndex)
-				addEvent!(sim.eventList; parentEvent = event, eventType = finishBatch, jobIndex = event.jobIndex, time = sim.time + processTime, machineIndex=machine.index)
+				addEvent!(sim.eventList; parentEvent = event, eventType = finishBatch, time = sim.time + processTime, machineIndex=machine.index)
 			else
 				job.status = jobBatched
 				machine.isBusy = false
@@ -528,7 +525,7 @@ function initSimulation(configFilename::String;
 	sim.tasks = eddTaskOrder(sim.jobs)
 	(optimgraph, optimnodes, optimarcs, nodeLookup) =createNetworkGraph(sim.jobs)
 	sim.batchesDict = basicBatching(sim, optimnodes)
-	batchGraph!(optimgraph, optimarcs, robot, sim, nodeLookup)
+	if sim.batchingDict[robot];batchGraph!(optimgraph, optimarcs, robot, sim, nodeLookup);end
 	assert(all(j->j.releaseTime>=sim.startTime, sim.jobs))
 
 	# read network data
@@ -783,4 +780,27 @@ function resetJobs!(sim::Simulation)
 			end
 		end
 	end
+end
+
+
+function batchCheckScheduleStart(sim::Simulation, machine::Machine)
+	batchSize = length(machine.batchedJobIndeces)
+	assert(batchSize <= sim.maxBatchSizeDict[machine.machineType])
+	for i in machine.batchedJobIndeces
+		if !(sim.jobs[i].status == jobAtMachine||sim.jobs[i].status == jobBatched);return false;end
+	end
+	if batchSize == sim.maxBatchSizeDict[machine.machineType]
+		return true
+	elseif !sim.useSchedule
+		numSameTypeRemaining = 0
+		remainingIndeces = setdiff(Set(1:length(sim.jobs)),machine.batchedJobIndeces)
+		for i in remainingIndeces
+			numSameTypeRemaining += length(filter(t -> (!t.isComplete && t.machineType==machine.machineType),sim.jobs[i].tasks))
+		end
+		if numSameTypeRemaining == 0; return true; end
+	else
+		if isempty(sim.schedule.jobInds);return true; end
+		if sim.schedule.jobInds[1] in machine.batchedJobIndeces; return true; end
+	end
+	return false
 end

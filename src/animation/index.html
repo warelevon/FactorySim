@@ -69,12 +69,12 @@
 	<div id="map_id" class="map"></div>
 	<div id="map_legend" class="legend">
 		<div><h3>Legend</h3></div>
-		<div><img id="image_worker_free"/>worker</div>
+		<div><img id="image_worker"/>worker</div>
 		<div><img id="image_job"/>job</div>
 		<div>machine types:</div>
 		<div><img id="image_machine_robot"/>robot</div>
-		<div><img id="image_machine_paintBench"/>paintBench</div>
-		<div><img id="image_machine_assembleBench"/>assembleBench</div>
+		<div><img id="image_machine_paintBench"/>painting bench</div>
+		<div><img id="image_machine_assembleBench"/>assembling bench</div>
 		<div><img id="image_machine_boxing"/>boxing</div>
 	</div>
 	<div id="menu" class="menu">
@@ -84,7 +84,7 @@
 		</div>
 		<div>Time: <span id="display_sim_time" size="8" maxlength="11"></span></div>
 		<div>Jump to time: <input id="new_sim_time" type="text" value="" size="7" maxlength="10"></input></div>
-		<div>Speed ( ≥ 1): <input id="sim_speed" type="text" value="200" size="5" maxlength="8"></input></div>
+		<div>Speed ( ≥ 1): <input id="sim_speed" type="text" value="500" size="5" maxlength="8"></input></div>
 		<div>FPS (1-100): <input id="fps" type="text" value="30" size="1" maxlength="3"></input></div>
 		<div>Show arcs <input type="checkbox" id="show_arcs"/></div>
 	</div>
@@ -412,9 +412,11 @@
 				icons[iconName] = icon;
 
 				// set icon image in map legend
+
 				imgId = "image_" + iconName;
+				console.log("id: " + imgId)
 				setImgSrc(imgId, options.iconUrl);
-				scaleDownImgWithinMaxDims(imgId, options.iconSize, [15,15]);
+				scaleDownImgWithinMaxDims(imgId, options.iconSize, [30,30]);
 			}
 
 			updateMarkerIcons();
@@ -473,12 +475,7 @@
 
 		function worker(id, lat, lon, status) {
 			this.id = id;
-			this.iconName = "";
-			if (status == "workerIdle") {
-				this.iconName = "worker_free"
-			}else {
-				this.iconName = "worker_busy"
-			}
+			this.iconName = "worker";
 			workerIcon = icons[this.iconName]
 			this.marker = markerIcon(workerIcon, lat, lon, "Worker " + id);
 		}
@@ -587,7 +584,7 @@
 				this.iconName = "machine_assembleBench"
 			}else if (machineType == "boxing") {
 				this.iconName = "machine_boxing"
-			}else {
+			}else if (machineType != "delivery"){
 				throw new Error("Undefined machine type: " + machineType)
 			}
 			machineIcon = icons[this.iconName]
