@@ -50,7 +50,7 @@ export # types
     FactoryTask, Job, Schedule, ProductOrder, Worker, Machine, Event, Resimulation, Simulation
 
 #heuristic functions
-export shiftingBottleNeck, createNetworkGraph
+export createNetworkGraph
 
 # export all enumeration types
 export
