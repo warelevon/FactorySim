@@ -91,7 +91,7 @@ for i = 1:100
     simulate!(sim)
     simtimes[i] = sim.time-sim.startTime
     simcompletes[i] = sim.numCompletedTasks
-    if i in 1:10:100; println("                                                           v                    ",i); end
+    if i in 1:10:100; println("                                                                               ",i); end
 end
 minimum(simcompletes)
 simperms

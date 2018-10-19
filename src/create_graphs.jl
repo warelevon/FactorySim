@@ -1,9 +1,12 @@
 ## Turn ToDo lists, productDict and job numbers into sources, destinations and weights
 # would be good to get a Dict to match vertice/node index with machine and job index
 function createNetworkGraph(jobs::Vector{Job})
+    ## Author: Levon ##
+    # create a graph representation of tasks to process
     numNodes = 2
     numJobs = 0
     maxNumTasks = 0
+    # claculate the number of jobs and the maximum number of tasks in across all jobs
     for j in filter(j -> !j.finished,jobs)
         numJobs+=1
         numTasks=0
@@ -17,17 +20,20 @@ function createNetworkGraph(jobs::Vector{Job})
         end
         maxNumTasks = max(maxNumTasks,numTasks)
     end
+    # initialise graph and nodes
     nodes = Vector{OptimNode}(numNodes)
     g = Graphs.simple_graph(numNodes)
     nodeInd = 2
     nodes[1] = OptimNode()
     nodes[1].index = 1
+    # initialise a table for reverse lookup of node indexes from job and machine
     nodeLookup = zeros(Integer,numJobs,maxNumTasks)
     for j in filter(j -> !j.finished,jobs)
         filteredTasks = filter(t ->!t.isComplete, j.tasks)
         if !(j.status==nullJobStatus || j.status == jobQueued)
             shift!(filteredTasks)
         end
+        # for each incomplete task add a node in the graph
         for t in filteredTasks
             nodes[nodeInd] = OptimNode()
             node = nodes[nodeInd]
@@ -44,20 +50,25 @@ function createNetworkGraph(jobs::Vector{Job})
     ne=0
     for j in jobtypes
         mactypes = sort(unique(filter(n->n.jobIndex==j,nodes[2:end-1]) .|> [x->x.machineTypeIndex]))
+        # loop through sorted list of unique machine types in job j
         for m in mactypes
             node = nodes[nodeLookup[j,m]]
+            # add source edge if first machine type
             if m == mactypes[1]
                 Graphs.add_edge!(g,1,node.index)
                 ne+=1
             end
+            # add sink edge if final machine type
             if m == mactypes[end]
                 Graphs.add_edge!(g,node.index,numNodes)
                 ne+=1
+            # otherwise add edge from previous task
             else
                 Graphs.add_edge!(g,node.index,nodeLookup[j,mactypes[(mactypes.>m)][1]])
                 ne+=1
             end
             for m2 in mactypes
+                # add inter-machine edges
                 if (m!=m2&&nodeLookup[j,m2]>0)
                     Graphs.add_edge!(g,node.index,nodeLookup[j,m2])
                     ne+=1
@@ -65,6 +76,7 @@ function createNetworkGraph(jobs::Vector{Job})
             end
         end
     end
+    # add extra edge information
     arcs = Vector{OptimArc}(ne)
     i=1
     for e in Graphs.edges(g)
@@ -85,6 +97,8 @@ function createNetworkGraph(jobs::Vector{Job})
 end
 
 function batchGraph!(g::Graphs.GenericGraph, arcs::Vector{OptimArc},machineType::MachineType,sim::Simulation, nodeLookup::Array{Integer})
+    ## Author: Levon ##
+    # adds batching to graph representation
     batches = sim.batchesDict[machineType]
     for b in batches
         processTime = batchProcessTime(sim,machineType,b)
@@ -104,6 +118,8 @@ function batchGraph!(g::Graphs.GenericGraph, arcs::Vector{OptimArc},machineType:
 end
 
 function basicBatching(sim::Simulation, nodes::Vector{OptimNode})
+    ## Author: Levon ##
+    # creates basic batches
     batchesDict = Dict{MachineType,Vector{Vector{Integer}}}()
     for mactype in filter(m->sim.batchingDict[m],instances(MachineType))
         machines = filter(m->m.machineType==mactype, sim.machines)
@@ -121,6 +137,8 @@ function basicBatching(sim::Simulation, nodes::Vector{OptimNode})
 end
 
 function createNetworkGraph(sources,destinations,weights)
+    ## Author: Ali ##
+    # used for optimisation test
     ne = length(sources)
     g = simple_inclist(ne)
     eweights1 = zeros(ne)
