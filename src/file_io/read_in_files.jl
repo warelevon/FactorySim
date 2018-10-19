@@ -1,60 +1,6 @@
-# Function to read read the order list and save info to the correct types
-function readProductOrders(productOrderName::String)
-    data = readDlmFile(productOrderName) # returns an array
-    data = orderList[setdiff(1:end,1),:] # remove the first row
-    n = size(productOrdersData[1:end,1])[1] # number of rows
-    #Main.Juno.render(orderList)
-    #Main.Juno.render(orderList[:,1])
-    dueDates = convert(Array{String},data[:,3])
-    # Cornverted due date to a float (# of seconds since 1970)
-    dueDates = Dates.datetime2unix.(DateTime(dueDates[:,1],"d-m-y"))
-    #Main.Juno.render(dueDates)
-    # create orders from data in the array
-    #@assert(n >= 1)
-    productOrders = Vector{ProductOrder}(n)
-
-    for i=1:n
-        productOrders[i] = ProductOrder()
-        productOrders[i].product = ProductType(data[i,1])
-        productOrders[i].size = data[i,2]
-        productOrders[i].dueTime = dueDates[i,1]
-    end
-    return orders
-end
-
-function readMachines(machineList::String)
-    machineListData = readDlmFile(machineList)
-    machineListData = machineListData[setdiff(1:end,1),:] # remove the first row
-    n = size(machineListData[1:end,1])[1] # number of rows
-
-    machines = Vector{Machine}(n)
-
-    for i = 1:n
-        machines[i] = Machine()
-        machines[i].machineType = MachineType(machineListData[i,1])
-        machines[i].loc = Location(machineListData[i,2],machineListData[i,3]) #set x and y location from row i
-    end
-    return machines
-end
-
-function readWorkers(workerList::String)
-    workerListData = readDlmFile(workerList)
-    workerListData = workerListData[setdiff(1:end,1),:] # remove the first row
-    n = size(workerListData[1:end,1])[1] # number of rows
-
-    workers = Vector{Worker}(n)
-
-    for i = 1:n
-        # Do we need to include more initial attributes?
-        # Otherwise they can be defined within other functions
-        workers[i] = Worker()
-        workers[i].index = workerListData[i,1]
-        workers[i].currentLoc = Location(workerListData[i,3],workerListData[i,4]) #set x and y location from row i
-    end
-    return workers
-end
-
+# all file read functions are based on a similar to form to their JEMSS counterparts
 function readWorkersFile(filename::String)
+    ## Author: Ali ##
     tables = readTablesFromFile(filename)
     table = tables["workers"]
     n = size(table.data,1) # number of workers
@@ -63,9 +9,8 @@ function readWorkersFile(filename::String)
 
     workers = Vector{Worker}(n)
     c = table.columns # shorthand
+    # read in worker data
     for i = 1:n
-        # Do we need to include more initial attributes?
-        # Otherwise they can be defined within other functions
         workers[i] = Worker()
         workers[i].index = c["index"][i]
         workers[i].currentLoc = Location(c["locx"][i],c["locy"][i]) #set x and y location from row i
@@ -75,7 +20,10 @@ function readWorkersFile(filename::String)
 end
 
 function readProductOrdersFile(filename::String)
+    ## Author: Ali ##
     tables = readTablesFromFile(filename)
+
+    # read various data around orders
     table = tables["miscData"]
     startTime = Dates.datetime2unix.(DateTime(table.columns["startTime"][1],"d-m-yTH:M:S"))/60/60/24
     startingLocation = Location()
@@ -90,6 +38,7 @@ function readProductOrdersFile(filename::String)
     productOrders = Vector{ProductOrder}(n)
     c = table.columns # shorthand
 
+    # read in orders
     for i=1:n
         productOrders[i] = ProductOrder()
         productOrders[i].product = ProductType(c["productType"][i])
@@ -102,20 +51,27 @@ function readProductOrdersFile(filename::String)
 end
 
 function readMachinesFile(filename::String)
+    ## Author: Ali ##
     tables = readTablesFromFile(filename)
-    table = tables["miscData"]
-    m = size(table.data,1) # number of orders
+
+    # load different machine types
+    table = tables["machineTypes"]
+    m = size(table.data,1)
 	assert(m >= 1)
     c = table.columns
+
+    # initiate dictionaries for storing machine type data
     batchingDict = Dict{MachineType,Bool}()
     batchingDict[nullMachineType] = false
-    setupDict = Dict{MachineType,Float}()
-    setupDict[nullMachineType] = nullTime
+    setupTimeDict = Dict{MachineType,Float}()
+    setupTimeDict[nullMachineType] = nullTime
     maxBatchDict = Dict{MachineType,Integer}()
     maxBatchDict[nullMachineType] = nullIndex
+
+    # populating dictionaries
     for i = 1:m
         batchingDict[MachineType(i)] = Bool(c["isBatched"][i])
-        setupDict[MachineType(i)] = c["setupTimes"][i]/60/24
+        setupTimeDict[MachineType(i)] = c["setupTimes"][i]/60/24
         maxBatchDict[MachineType(i)] = c["maxBatchSize"][i]
     end
 
@@ -126,6 +82,7 @@ function readMachinesFile(filename::String)
     machines = Vector{Machine}(n)
     c = table.columns # shorthand
 
+    # reading in individual machines
     for i = 1:n
         machines[i] = Machine()
         machines[i].index = c["index"][i]
@@ -138,27 +95,27 @@ function readMachinesFile(filename::String)
 end
 
 function readProductDictFile(filename::String)
+    ## Author: Ali ##
     tables = readTablesFromFile(filename)
-    table = tables["miscData"]
-    numProducts = table.columns["numProducts"][1]
-
     dictTable = tables["productDict"]
     m = size(dictTable.data,1) # number of orders
     assert(m >= 1)
     productDict = Dict{ProductType,Vector{FactoryTask}}()
+    # load each task list for each product type
     for k=1:m
         product = dictTable.columns["productName"][k]
         key = ProductType(dictTable.columns["productType"][k])
         table = tables[product]
-        n = size(table.data,1) # number of orders
+        n = size(table.data,1) # number of tasks
         assert(n >= 1)
         c = table.columns # shorthand
-        factTaskList = Vector{FactoryTask}(n)
+        taskList = Vector{FactoryTask}(n)
+        # populate each task list
         for i = 1:n
-            factTaskList[i] = FactoryTask()
-            factTaskList[i].machineType = MachineType(c["machineType"][i])
-            factTaskList[i].withWorker = c["withWorker"][i]/60/24
-            factTaskList[i].withoutWorker = c["withoutWorker"][i]/60/24
+            taskList[i] = FactoryTask()
+            taskList[i].machineType = MachineType(c["machineType"][i])
+            taskList[i].withWorker = c["withWorker"][i]/60/24
+            taskList[i].withoutWorker = c["withoutWorker"][i]/60/24
         end
         productDict[key]= deepcopy(factTaskList)
     end

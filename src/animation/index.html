@@ -171,18 +171,6 @@
 					var j = msgObj.job
 					removeJob(j.index)
 					break;
-				case "add_stack":
-					var s = msgObj.stack
-					addStack(length(s), s[1].currentLoc.y, s[1].currentLoc.x)
-					break;
-				case "move_stack":
-					var s = msgObj.stack
-					moveStack(length(s), s[1].currentLoc.y, s[1].currentLoc.x)
-					break;
-				case "remove_stack":
-					var s = msgObj.stack
-					removeStack(j.index)
-					break;
 				case "prepared_next_frame":
 					getNextFrame(msgObj.time)
 					break;
@@ -507,7 +495,6 @@
 		function setBackground(lat1, lon1, lat2, lon2, imgUrl) {
 			imageBounds = [[lat1,lon1],[lat2,lon2]]
 			imageUrl = imgUrl
-			// imageUrl = 'https://github.com/warelevon/FactorySim/blob/master/assets/animation/icons/background.png'
 			image = overlay(imageUrl,imageBounds)
 		}
 
@@ -575,6 +562,7 @@
 
 		function machine(id, lat, lon, machineType) {
 			this.id = id;
+			// sets machine icon based on type
 			this.iconName = "";
 			if (machineType == "robot") {
 				this.iconName = "machine_robot"

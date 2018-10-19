@@ -1,4 +1,4 @@
-miscData,5,,
+machineTypes,5,,
 machineType,isBatched,setupTimes,maxBatchSize
 1,true,30,3
 2,false,0,0

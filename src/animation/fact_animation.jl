@@ -7,6 +7,7 @@ global animPort = nullIndex # localhost port for animation, to be set
 function animSetIcons!(client::WebSocket, sim::Simulation)
 	## Partially changed function from JEMSS ##
 	## Based on function of same name ##
+	## Author: Levon ##
 	pngFileUrl(filename) = string("data:image/png;base64,", filename |> read |> base64encode)
 	iconPath = joinpath(@__DIR__, "..", "..", "assets", "animation", "icons")
 	icons = JSON.parsefile(joinpath(iconPath, "icons.json"))
@@ -29,7 +30,8 @@ end
 
 # sets background image of mapbox
 function animSetBackground(client::WebSocket, sim::Simulation)
-	# New function created by levon to call json to create background image in sim #
+	# New function to call json to create background image in sim #
+	## Author: Levon ##
 	messageDict = JEMSS.createMessageDict("set_background")
 	messageDict["background"] = sim.background
 	write(client, json(messageDict))
@@ -39,6 +41,7 @@ end
 function animAddMachines(client::WebSocket, sim::Simulation)
 	## Partially changed function from JEMSS ##
 	## Based on animAddBuildings ##
+	## Author: Levon ##
 	messageDict = JEMSS.createMessageDict("add_machine")
 	for m in sim.machines
 		messageDict["machine"] = m
@@ -50,6 +53,7 @@ end
 function animAddWorkers!(client::WebSocket, sim::Simulation)
 	## Partially changed function from JEMSS ##
 	## Based on animAddAmbs! ##
+	## Author: Levon ##
 	messageDict = JEMSS.createMessageDict("add_worker")
 	for worker in sim.workers
 		worker.currentLoc = JEMSS.getRouteCurrentLocation!(sim.net, worker.route, sim.startTime)
@@ -62,6 +66,7 @@ end
 function updateFrame!(client::WebSocket, sim::Simulation, time::Float)
 	## Partially changed function from JEMSS ##
 	## Based on function of same name ##
+	## Author: Levon ##
 
 	# check which ambulances have moved since last frame
 	# need to do this before showing call locations
@@ -122,6 +127,7 @@ end
 function updateJobLocation!(sim::Simulation, job::Job, time::Float)
 	## Partially changed function from JEMSS ##
 	## Based on updateCallLocation! ##
+	## Author: Levon ##
 
 	# consider moving job if the status indicates worker moving job
 	if job.status == jobGoingToMachine
