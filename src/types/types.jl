@@ -164,16 +164,6 @@ type Resimulation
 		[], [], nullIndex)
 end
 
-type Stack
-    index::Integer
-    jobs::Set{Job}
-    size::Integer
-    location::Location
-
-    Stack() = new(nullIndex,Set{Job}(),nullIndex,Location())
-    Stack(i,job) = new(i,Set{Job}([job]),1,deepcopy(job.currentLoc))
-end
-
 type Simulation
 	startTime::Float
 	time::Float
@@ -218,10 +208,7 @@ type Simulation
 
 	# for animation:
 	currentJobs::Set{Job} # all calls between arrival and service finish at current time
-    currentStacks::Vector{Stack}
-    stackIndex::Integer
-	previousJobs::Set{Job} # calls in currentCalls for previous frame
-    previousStacks::Vector{Stack}
+	previousJobs::Set{Job} # jobs in currentJobs for previous frame
     background::Background
 
 	# files/folders:
@@ -247,7 +234,7 @@ type Simulation
         0,0,
 		[], 0, [],
         Resimulation(),
-		Set(), [], 0, Set(), [], Background(),
+		Set(), Set(), Background(),
 		"", "", Dict(), Dict(), IOStream(""),
 		false,
 		false, false)
