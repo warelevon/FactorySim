@@ -1,5 +1,7 @@
 # load the resimulation data from the events file
 # changes sim.resim.use to be false unless all checks are passed
+
+## Unchanged functions from JEMSS ##
 function initResimulation!(sim::Simulation)
 	resim = sim.resim # shorthand
 	assert(resim.use)
