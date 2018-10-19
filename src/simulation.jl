@@ -156,11 +156,11 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 		# Event happens when a job enters the factory
 		# It will take the current task list and call a local search to create  a
 		# newly ordered task list
-		println("**********************")
-		println("jobIndex: ",event.jobIndex,", eventIndex: " ,event.index)
-		println("sim schedule")
-		println(sim.schedule)
-		
+		#println("**********************")
+		#println("jobIndex: ",event.jobIndex,", eventIndex: " ,event.index)
+		#println("sim schedule")
+		#println(sim.schedule)
+
 		##################################
 
 	elseif eventType == checkAssign
@@ -324,7 +324,7 @@ function simulateFactoryEvent!(sim::Simulation, event::Event)
 					bTask.machineProcessFinish = sim.time + processTime
 				end
 				addEvent!(sim.eventList; parentEvent = event, eventType = releaseWorker, time = (sim.time+sim.setupTimesDict[machine.machineType]), workerIndex = event.workerIndex)
-				addEvent!(sim.eventList; parentEvent = event, eventType = finishBatch, time = sim.time + processTime, machineIndex=machine.index)
+				addEvent!(sim.eventList; parentEvent = event, eventType = finishBatch, jobIndex = event.jobIndex, time = sim.time + processTime, machineIndex=machine.index)
 			else
 				job.status = jobBatched
 				machine.isBusy = false

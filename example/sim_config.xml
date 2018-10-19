@@ -24,12 +24,12 @@
 		<numMachines>4</numMachines>
 		<numOrders>20</numOrders>
 		<productOrderDistributions>
-			<!-- period is 1/10 days, giving roughly 10 product orders per day-->
-			<interarrivalTime seed="0">Exponential(1/10)</interarrivalTime>
+			<!-- period is 1/10 days, giving roughly 5 product orders per day-->
+			<interarrivalTime seed="0">Exponential(1/5)</interarrivalTime>
 			<productOrderType seed="0">Categorical([0.57, 0.43])</productOrderType>
 			<productOrderSize seed="0">DiscreteUniform(1,10)</productOrderSize>
-			<!-- distribution is dueTime - arrivalTime between 1 and 9 days-->
-			<dueTime seed="0">TriangularDist(1,9,5)</dueTime>
+			<!-- distribution is dueTime - arrivalTime between 4 and 6 days-->
+			<dueTime seed="0">TriangularDist(4,6,5)</dueTime>
 		</productOrderDistributions>
 		<!-- offset from 00:00am today -->
 		<startTime>0.0</startTime>

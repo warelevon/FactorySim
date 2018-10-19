@@ -3,7 +3,6 @@ using JEMSS
 
 path = @__DIR__
 
-
 # generate artificial simulation productOrder files
 #println("\n=== Generating factory simulation files ===")
 #factConfigFilename = joinpath(path, "sim_config.xml")
@@ -17,11 +16,10 @@ openOutputFiles!(sim)
 simulate!(sim)
 closeOutputFiles!(sim)
 
-sim
-
 println("\n=== Resimulating based on output/events file ===")
 sim = initSimulation(simConfigFilename)
 animate(port = 8001, configFilename = simConfigFilename)
 
 # Stats and output used for report/talks/compendium
+sim #to inspect different variables
 utilisation = getUtilisation(sim) #for workers
